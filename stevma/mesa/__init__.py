@@ -2,7 +2,6 @@
 """
 
 from pathlib import Path
-import pprint
 from typing import Union
 import sys
 
@@ -299,6 +298,7 @@ class MESArun(object):
 
         # next, the structure for the `inlist_project` is created. this file is called from inside
         # the previously created `inlist`
+        projectNamelists = dict()
         if self.is_binary_evolution:
 
             if self.run_id == "mesabinary":
@@ -317,3 +317,25 @@ class MESArun(object):
                     ] = f"{self.run_directory}/inlist2"
 
                 self.namelists_for_template = mesabinaryOptions
+
+            elif self.run_id == "mesabin2dco":
+                sys.exit("mesabin2dco template project not ready to be used")
+
+            else:
+                sys.exit(
+                    f"{self.run_id}: unknown id for creating template of binary namelists"
+                )
+
+        else:
+
+            if self.run_id == "mesastar":
+                mesastarOptions = self.__get_non_default_values_for_namelists__(
+                    Options=self._MESAOptions, namelists=self._defaultStarNamelists
+                )
+
+                self.namelists_for_template = mesastarOptions
+
+            else:
+                sys.exit(
+                    f"{self.run_id}: unknown id for creating template star namelists"
+                )
