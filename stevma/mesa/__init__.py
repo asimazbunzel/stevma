@@ -364,7 +364,9 @@ class MESArun(object):
                         "inlist_names(2)"
                     ] = f"{self.run_directory}/inlist2"
 
-                self.namelists_for_template = self.__pop_empty_namelists__(d=mesabinaryOptions)
+                self.namelists_for_template = self.__pop_empty_namelists__(
+                    d=mesabinaryOptions
+                )
 
             elif self.run_id == "mesabin2dco":
                 sys.exit("mesabin2dco template project not ready to be used")
@@ -381,7 +383,9 @@ class MESArun(object):
                     Options=self._MESAOptions, namelists=self._defaultStarNamelists
                 )
 
-                self.namelists_for_template = self.__pop_empty_namelists__(d=mesastarOptions)
+                self.namelists_for_template = self.__pop_empty_namelists__(
+                    d=mesastarOptions
+                )
 
             else:
                 sys.exit(
@@ -389,8 +393,7 @@ class MESArun(object):
                 )
 
     def set_run_namelists(self) -> None:
-        """Create namelists with options that change for different MESA runs
-        """
+        """Create namelists with options that change for different MESA runs"""
 
         def replace_run_string_in_dict(d: dict = {}) -> dict:
             """Replace a string with `template` in a key
@@ -440,7 +443,8 @@ class MESArun(object):
         # namelists_for_run
         self.namelists_for_run = self.__pop_empty_namelists__(d=runOptions)
 
-    def create_template_structure(self,
+    def create_template_structure(
+        self,
         copy_default_workdir: bool = True,
         extra_src_files: list = [],
         extra_makefile: list = [],
@@ -518,9 +522,7 @@ class MESArun(object):
                         print(f"could not copy file {file}. file not found")
 
                     if ".f" not in file:
-                        print(
-                            f"file {file} is not a fortran file. copying either way"
-                        )
+                        print(f"file {file} is not a fortran file. copying either way")
             else:
                 print("source files were not provided for custom workdir")
 
@@ -550,8 +552,7 @@ class MESArun(object):
                     print(f"could not copy file {file}. file not found")
 
     def create_run_structure(self) -> None:
-        """Create and copy files to run root
-        """
+        """Create and copy files to run root"""
 
         if not self.run_directory.is_dir():
             self.run_directory.mkdir(parents=True)
@@ -570,6 +571,4 @@ class MESArun(object):
         elif loc_id == "run":
             folder_name = self.run_directory
         else:
-            sys.exit(
-                f"{loc_id} is not a valid option"
-            )
+            sys.exit(f"{loc_id} is not a valid option")
