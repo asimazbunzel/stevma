@@ -3,6 +3,7 @@
 
 from pathlib import Path
 from typing import Union
+from shutil import copyfile
 import sys
 
 import yaml
@@ -20,6 +21,9 @@ class MESArun(object):
 
     Parameters
     ----------
+    identifier : `int`
+        Integer for identification purposes for a database
+
     template_directory : `str / Path`
         Folder location of the template used in the run
 
@@ -39,6 +43,21 @@ class MESArun(object):
 
     mesa_dir : `str / Path`
         Location of the MESA source code
+
+    variables : `dict`
+        Dictionary with the name and value of the variables to use in the MESA run. This is created
+        with the **kwargs if this is the first time creating the object, but is present in the case
+        the loading comes from a database
+
+    namelists_for_init : `dict`
+        Dictionary containing the information of the namelists needed to start a run (it contains
+        input for the `inlist` file which MESA typically looks for)
+
+    namelists_for_template : `dict`
+        Dictionary with the options in each MESA namelist that is shared between different runs
+
+    namelists_for_run : `dict`
+        Dictionary with the options needed to perform a single MESA run
 
     **kwargs : `dict`
         All options that are changing between simulations should be here. Their names should match
@@ -171,6 +190,11 @@ class MESArun(object):
 
         Parameters
         ----------
+        Options : `dict`
+            Dictionary with options to compare against defaults
+
+        namelists : `list`
+            List with strings matching MESA namelists
 
         Returns
         -------
@@ -231,7 +255,31 @@ class MESArun(object):
 
         return nonDefaultOptions
 
-    def set_template_namelists(self):
+    def __pop_empty_namelists__(self, d: dict = {}) -> dict:
+        """Remove empty namelists from dict
+
+        Parameters
+        ----------
+        d : `dict`
+            Dictionary to search for empty elements to pop
+        """
+
+        namelists = [namelist for namelist in self._defaultStarNamelists]
+        namelists.extend(([namelist for namelist in self._defaultBinaryNamelists]))
+
+        keys_to_pop = []
+        for namelist in namelists:
+            if namelist in d:
+                if len(d[namelist]) == 0:
+                    keys_to_pop.append(namelist)
+
+        if len(keys_to_pop) > 0:
+            for key in keys_to_pop:
+                d.pop(key)
+
+        return d
+
+    def set_template_namelists(self) -> None:
         """Create namelists with options that do not change for different MESA runs
 
         These options are then considered to be a template for the run
@@ -316,7 +364,7 @@ class MESArun(object):
                         "inlist_names(2)"
                     ] = f"{self.run_directory}/inlist2"
 
-                self.namelists_for_template = mesabinaryOptions
+                self.namelists_for_template = self.__pop_empty_namelists__(d=mesabinaryOptions)
 
             elif self.run_id == "mesabin2dco":
                 sys.exit("mesabin2dco template project not ready to be used")
@@ -333,9 +381,195 @@ class MESArun(object):
                     Options=self._MESAOptions, namelists=self._defaultStarNamelists
                 )
 
-                self.namelists_for_template = mesastarOptions
+                self.namelists_for_template = self.__pop_empty_namelists__(d=mesastarOptions)
 
             else:
                 sys.exit(
                     f"{self.run_id}: unknown id for creating template star namelists"
                 )
+
+    def set_run_namelists(self) -> None:
+        """Create namelists with options that change for different MESA runs
+        """
+
+        def replace_run_string_in_dict(d: dict = {}) -> dict:
+            """Replace a string with `template` in a key
+
+            Parameters
+            ----------
+            d : `dict`
+                Dictionary to search for the string to replace
+            """
+
+            for key, value in d.items():
+                try:
+                    if "#{run}" in d[key]:
+                        arr = value.split("/")
+                        value = f"{self.run_directory}/{arr[-1]}"
+                        d[key] = value
+                except TypeError:
+                    continue
+
+            return d
+
+        if self.is_binary_evolution:
+
+            if self.run_id == "mesabinary":
+                mesabinaryOptions = self.__get_non_default_values_for_namelists__(
+                    Options=self.variables, namelists=self._defaultBinaryNamelists
+                )
+
+                runOptions = mesabinaryOptions
+
+            elif self.run_id == "mesabin2dco":
+                sys.exit("mesabin2dco template project not ready to be used")
+
+            else:
+                sys.exit(
+                    f"{self.run_id}: unknown id for creating template of binary namelists"
+                )
+
+        # load options with MESAstar variable options
+        mesastarOptions = self.__get_non_default_values_for_namelists__(
+            Options=self.variables, namelists=self._defaultStarNamelists
+        )
+
+        runOptions.update(mesastarOptions)
+
+        # once all run options are set, remove empty elements in dictionary and store it as the
+        # namelists_for_run
+        self.namelists_for_run = self.__pop_empty_namelists__(d=runOptions)
+
+    def create_template_structure(self,
+        copy_default_workdir: bool = True,
+        extra_src_files: list = [],
+        extra_makefile: list = [],
+        extra_template_files: list = [],
+    ) -> None:
+        """Create and copy files and folders to template root
+
+        Parameters
+        ----------
+        copy_default_workdir : `bool`
+            Flag to choose whether to copy the default workdir of MESA
+
+        extra_src_files : `list`
+            List of files that should go in the src folder of the template
+
+        extra_makefile : `list`
+            List of makefiles that goes in the make folder
+
+        extra_template_files : `list`
+            List of files that should be copied in the template folder
+        """
+
+        # create folders in template directory
+        for name in self._defaultFolderNames:
+            folder_name = self.template_directory / name
+            folder_name.mkdir(parents=True)
+
+        if copy_default_workdir:
+            # set some useful variable names
+            if self.is_binary_evolution:
+                mesa_folder = "binary"
+                src_files = self._defaultSrcFilenamesBinary
+            else:
+                mesa_folder = "star"
+                src_files = self._defaultSrcFilenamesStar
+
+            # loop over common scripts of MESA
+            for file in self._defaultScriptFilenames:
+                fname = self.mesa_dir / mesa_folder / "work" / file
+
+                if file == "makefile":
+                    output_folder = self.template_directory / "make"
+                    fname = self.mesa_dir / mesa_folder / "work/make" / file
+                else:
+                    output_folder = self.template_directory
+
+                # to use copyfile, need to set the name of the output, not just the folder
+                if fname.is_file():
+                    output_file = output_folder / file
+                    copyfile(fname, output_file)
+                else:
+                    print(f"could not copy file {fname}. file not found")
+
+            # also loop over src files depending on the type of run
+            for file in src_files:
+                fname = self.mesa_dir / mesa_folder / "work/src" / file
+                output_folder = self.template_directory / "src"
+
+                if fname.is_file():
+                    output_file = output_folder / file
+                    copyfile(fname, output_file)
+                else:
+                    print(f"could not copy file {fname}. file not found")
+
+        else:
+            # try to copy extra files
+            if len(extra_src_files) > 0:
+                for file in extra_src_files:
+                    output_folder = self.template_directory / "src"
+                    file = Path(file)
+                    if file.is_file():
+                        output_file = output_folder / file
+                        copyfile(file, output_file)
+                    else:
+                        print(f"could not copy file {file}. file not found")
+
+                    if ".f" not in file:
+                        print(
+                            f"file {file} is not a fortran file. copying either way"
+                        )
+            else:
+                print("source files were not provided for custom workdir")
+
+            # extra files in the make folder
+            if len(extra_makefile):
+                for file in extra_makefile:
+                    output_folder = self.template_directory / "make"
+                    file = Path(file)
+                    if file.is_file():
+                        output_file = output_folder / file
+                        copyfile(file, output_file)
+                    else:
+                        print(f"could not copy file {file}. file not found")
+            else:
+                print("makefile was not provided for custom workdir")
+
+        # copy extra files for the template directory. e.g., the *.list files with what will be
+        # saved in MESA output
+        if len(extra_template_files) > 0:
+            for file in extra_template_files:
+                output_folder = self.template_directory
+                file = Path(file)
+                if file.is_file():
+                    output_file = output_folder / file
+                    copyfile(file, output_file)
+                else:
+                    print(f"could not copy file {file}. file not found")
+
+    def create_run_structure(self) -> None:
+        """Create and copy files to run root
+        """
+
+        if not self.run_directory.is_dir():
+            self.run_directory.mkdir(parents=True)
+
+    def save_namelists_to_file(self, loc_id: str = "") -> None:
+        """Save namelists to a file
+
+        Parameters
+        ----------
+        loc_id : `str`
+            Identifier to know where to store the inlist. Options are: `template` or `run`
+        """
+
+        if loc_id == "template":
+            folder_name = self.template_directory
+        elif loc_id == "run":
+            folder_name = self.run_directory
+        else:
+            sys.exit(
+                f"{loc_id} is not a valid option"
+            )
