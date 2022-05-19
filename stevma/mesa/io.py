@@ -84,6 +84,38 @@ def parse_fortran_value_to_python(value):
     return parsed_value
 
 
+def parse_python_value_to_fortran(value):
+    """Recieve a python friendly value and returns it into a fortran one"""
+
+    is_python2 = sys.version_info < (3, 0, 0)
+
+    if isinstance(value, bool):
+        return value and ".true." or ".false."
+
+    elif isinstance(value, int):
+        return "{:d}".format(value)
+
+    elif isinstance(value, float):
+        return ("{:.10e}".format(value)).replace("e", "d")
+
+    elif isinstance(value, str):
+        return "'{}'".format(value)
+
+    elif is_python2 and isinstance(value):  # needed if unicode literals are used
+        return "'{}'".format(value)
+
+    elif isinstance(value, complex):
+        return "({},{})".format(
+            format_value_to_fortran(value.real),
+            format_value_to_fortran(value.imag),
+        )
+
+    else:
+        raise Exception("Variable type not understood: {}".format(type(value)))
+
+    return parsed_value
+
+
 def namelist_string_to_dict(buffer: str = ""):
     """From a string containing a fortran namelist, group elements of it into a dictionary
 
@@ -211,3 +243,60 @@ def namelist_string_to_dict(buffer: str = ""):
         namelists[group_name] = group
 
         return namelists
+
+
+def dump_dict_to_namelist_string(
+    data: dict = {}, namelist: str = "", array_inline: bool = False
+) -> str:
+    """Dump python dictionary to a string of a fortran namelist
+
+    Parameters
+    ----------
+    data : `dict`
+        Dictionary to save as a namelist
+
+    namelist : `str`
+        String with the id of the namelist
+
+    array_inline : `bool`
+        Flag to store an array in a single line of the string
+
+    Returns
+    -------
+    namelist_string : `str`
+        String with the namelist
+    """
+
+    if namelist == "":
+        raise ValueError("namelist cannot be an empty string")
+
+    # store data into an array that will then be saved as a string
+    lines = [f"&{namelist}"]
+
+    # if there is no info in the dictionary, return the namelist string
+    # either way
+    if len(data) == 0:
+        print(f"no items found in {data}")
+        lines.append(f"/ ! end of {namelist} namelist")
+        namelist_string = "\n".join(lines) + "\n"
+
+    # loop over the dictionary and append to array
+    for key, value in data.items():
+        if isinstance(value, list):
+            if array_inline:
+                lines.append(
+                    f"   {key} = {''.join([parse_python_value_to_fortran(value=v) for v in value])}"
+                )
+            else:
+                for n, v in enumerate(value):
+                    lines.append(
+                        f"   {key}({n+1}) = {parse_python_value_to_fortran(value=v)}"
+                    )
+        else:
+            lines.append(f"   {key} = {parse_python_value_to_fortran(value=value)}")
+
+    # change from array to string
+    lines.append("/ ! end of {} namelist".format(namelist))
+    namelist_string = "\n".join(lines) + "\n"
+
+    return namelist_string
