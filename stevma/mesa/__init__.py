@@ -4,6 +4,7 @@
 from pathlib import Path
 from typing import Union
 from shutil import copyfile
+import subprocess
 import sys
 
 import yaml
@@ -43,6 +44,12 @@ class MESArun(object):
 
     mesa_dir : `str / Path`
         Location of the MESA source code
+
+    mesasdk_dir : `str / Path`
+        Location of the MESASDK (software development kit of MESA)
+
+    mesa_caches_dir : `str / Path`
+        Location of the caches dir of MESA
 
     variables : `dict`
         Dictionary with the name and value of the variables to use in the MESA run. This is created
@@ -94,6 +101,8 @@ class MESArun(object):
         run_id: str = "",
         custom_run_name: str = "",
         mesa_dir: str = "",
+        mesasdk_dir: str = "",
+        mesa_caches_dir: str = "",
         variables: dict = {},
         namelists_for_init: dict = {},
         namelists_for_template: dict = {},
@@ -121,10 +130,19 @@ class MESArun(object):
         # mesa_run_id sets the id for the type of run
         self.run_id = run_id
 
+        # mesa specific folders
         if isinstance(mesa_dir, str):
             self.mesa_dir = Path(mesa_dir)
         else:
             self.mesa_dir = mesa_dir
+        if isinstance(mesasdk_dir, str):
+            self.mesasdk_dir = Path(mesasdk_dir)
+        else:
+            self.mesasdk_dir = mesasdk_dir
+        if isinstance(mesa_caches_dir, str):
+            self.mesa_caches_dir = Path(mesa_caches_dir)
+        else:
+            self.mesa_caches_dir = mesa_caches_dir
 
         # load MESA defaults
         self._MESADefaults = get_mesa_defaults(mesa_dir=self.mesa_dir)
@@ -577,6 +595,59 @@ class MESArun(object):
 
         if not self.run_directory.is_dir():
             self.run_directory.mkdir(parents=True)
+
+    def compile_template(self) -> None:
+        """Compile source code of MESA run"""
+
+        if not self.mesa_dir.is_dir():
+            raise ValueError(f"{self.mesa_dir} is not a valid MESA installation")
+
+        if not self.mesasdk_dir.is_dir():
+            raise ValueError(f"{self.mesasdk_dir} is not a valid MESASDK installation")
+
+        if not self.mesa_caches_dir.is_dir():
+            raise ValueError(
+                f"{self.mesa_caches_dir} is not a valid MESA caches location"
+            )
+
+        # source MESA env vars
+        mesa_env_vars_string = f"export MESA_DIR={self.mesa_dir}; "
+        mesa_env_vars_string += f"export MESA_CACHES_DIR={self.mesa_caches_dir}; "
+        mesa_env_vars_string += f"export MESASDK_ROOT={self.mesasdk_dir}; "
+        mesa_env_vars_string += f"source $MESASDK_ROOT/bin/mesasdk_init.sh"
+
+        # for mesabin2dco type of run, compile the CE and CC modules
+        if self.run_id == "mesabin2dco":
+            try:
+                p = subprocess.Popen(
+                    f"{mesa_env_vars_string}; chmod +x mk_mods; ./mk_mods",
+                    shell=True,
+                    executable="/bin/bash",
+                    cwd=self.template_directory,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                )
+                stdout, stderr = p.communicate()
+                if stderr is not None:
+                    print(f"WARNING: could not compile CE & CC modules: {stderr}")
+            except Exception as e:
+                print(e)
+
+        # compile MESA source code
+        try:
+            p = subprocess.Popen(
+                f"{mesa_env_vars_string}; chmod +x mk; ./mk",
+                shell=True,
+                executable="/bin/bash",
+                cwd=self.template_directory,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+            )
+            stdout, stderr = p.communicate()
+            if stderr is not None:
+                print(f"WARNING: could not compile MESA source code: {stderr}")
+        except Exception as e:
+            print(e)
 
     def save_namelists_to_file(self, name_id: str = "") -> None:
         """Save namelists to a file
