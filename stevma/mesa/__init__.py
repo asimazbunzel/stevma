@@ -9,7 +9,7 @@ import sys
 import yaml
 
 from stevma.mesa.mesa import MESAMainNamelists, get_mesa_defaults
-from stevma.mesa.io import load_yaml
+from stevma.mesa.io import load_yaml, dump_dict_to_namelist_string
 
 
 class MESArun(object):
@@ -76,6 +76,13 @@ class MESArun(object):
     )
     _defaultStarNamelists = ("star_job", "eos", "kap", "controls", "pgstar")
     _defaultBinaryNamelists = ("binary_job", "binary_controls", "binary_pgstar")
+
+    _defaultInitInlistName = "inlist"
+    _defaultProjectInlistName = "inlist_project"
+    _defaultBinaryRunInlistName = "inlist_binary"
+    _defaultStarRunInlistName = "inlist_star"
+    _defaultStar1RunInlistName = "inlist1"
+    _defaultStar2RunInlistName = "inlist2"
 
     def __init__(
         self,
@@ -432,6 +439,9 @@ class MESArun(object):
                     f"{self.run_id}: unknown id for creating template of binary namelists"
                 )
 
+        else:
+            runOptions = dict()
+
         # load options with MESAstar variable options
         mesastarOptions = self.__get_non_default_values_for_namelists__(
             Options=self.variables, namelists=self._defaultStarNamelists
@@ -446,6 +456,7 @@ class MESArun(object):
     def create_template_structure(
         self,
         copy_default_workdir: bool = True,
+        replace: bool = True,
         extra_src_files: list = [],
         extra_makefile: list = [],
         extra_template_files: list = [],
@@ -456,6 +467,9 @@ class MESArun(object):
         ----------
         copy_default_workdir : `bool`
             Flag to choose whether to copy the default workdir of MESA
+
+        replace : `bool`
+            Flag to control if files in template folder will be replaced or not
 
         extra_src_files : `list`
             List of files that should go in the src folder of the template
@@ -470,7 +484,13 @@ class MESArun(object):
         # create folders in template directory
         for name in self._defaultFolderNames:
             folder_name = self.template_directory / name
-            folder_name.mkdir(parents=True)
+            if not folder_name.is_dir():
+                folder_name.mkdir(parents=True)
+            else:
+                # in case replace is true, delete everything inside folder if already exists
+                if replace:
+                    for p in folder_name.glob("*"):
+                        p.unlink()
 
         if copy_default_workdir:
             # set some useful variable names
@@ -557,18 +577,128 @@ class MESArun(object):
         if not self.run_directory.is_dir():
             self.run_directory.mkdir(parents=True)
 
-    def save_namelists_to_file(self, loc_id: str = "") -> None:
+    def save_namelists_to_file(self, name_id: str = "") -> None:
         """Save namelists to a file
 
         Parameters
         ----------
-        loc_id : `str`
+        name_id : `str`
             Identifier to know where to store the inlist. Options are: `template` or `run`
         """
 
-        if loc_id == "template":
+        # check for the correct option
+        if name_id == "template":
+            # set the name of the template folder
             folder_name = self.template_directory
-        elif loc_id == "run":
+
+            # also get names of files
+            if self.run_id == "mesabinary" or self.run_id == "mesastar":
+                inlist_fname = folder_name / self._defaultInitInlistName
+                inlist_project_fname = folder_name / self._defaultProjectInlistName
+
+            elif self.run_id == "mesabin2dco":
+                inlist_fname = folder_name / "inlist_bin2dco"
+
+            else:
+                sys.exit(
+                    f"{self.run_id}: unknown id for saving template of binary namelists"
+                )
+
+            # first, create `inlist` file
+            inlist_file_string = ""
+            for key in self.namelists_for_init.keys():
+                inlist_file_string += dump_dict_to_namelist_string(
+                    data=self.namelists_for_init[key], namelist=key, array_inline=False
+                )
+            # save to file
+            with open(inlist_fname, "w") as f:
+                f.write(inlist_file_string)
+
+            # second, create `inlist_project` file
+            inlist_project_file_string = ""
+            for key in self.namelists_for_template.keys():
+                inlist_project_file_string += dump_dict_to_namelist_string(
+                    data=self.namelists_for_template[key],
+                    namelist=key,
+                    array_inline=False,
+                )
+            # save to file
+            with open(inlist_project_fname, "w") as f:
+                f.write(inlist_project_file_string)
+
+        elif name_id == "run":
+            # make a copy of namelists_for_run to save items for each stars differently
+            data = self.namelists_for_run.copy()
+            data1 = self.namelists_for_run.copy()
+            data2 = self.namelists_for_run.copy()
+
+            # set names
             folder_name = self.run_directory
+
+            # save files to MESAbinary or MESAbin2dco run folder
+            if self.run_id == "mesabinary" or self.run_id == "mesabin2dco":
+                inlist_binary_run_fname = folder_name / self._defaultBinaryRunInlistName
+                inlist_star1_run_fname = folder_name / self._defaultStar1RunInlistName
+                inlist_star2_run_fname = folder_name / self._defaultStar2RunInlistName
+
+                # patch to add names of different folders for two stars
+                if "controls" not in data1:
+                    data1["controls"] = dict()
+                if "controls" not in data2:
+                    data2["controls"] = dict()
+                if "log_directory" not in data1["controls"]:
+                    data1["controls"]["log_directory"] = "LOGS1"
+                if "log_directory" not in data2["controls"]:
+                    data2["controls"]["log_directory"] = "LOGS2"
+
+                # create string with namelists. one for each needed: binary, star1 & star2
+                inlist_binary_file_string = ""
+                inlist1_star_file_string = ""
+                inlist2_star_file_string = ""
+                for key in data:
+                    if key in self._defaultBinaryNamelists:
+                        inlist_binary_file_string = dump_dict_to_namelist_string(
+                            data=data[key], namelist=key, array_inline=False
+                        )
+                for key in data1:
+                    if key in self._defaultStarNamelists:
+                        inlist1_star_file_string = dump_dict_to_namelist_string(
+                            data=data1[key], namelist=key, array_inline=False
+                        )
+                for key in data2:
+                    if key in self._defaultStarNamelists:
+                        inlist2_star_file_string = dump_dict_to_namelist_string(
+                            data=data2[key], namelist=key, array_inline=False
+                        )
+
+                # save to files
+                with open(inlist_binary_run_fname, "w") as f:
+                    f.write(inlist_binary_file_string)
+                with open(inlist_star1_run_fname, "w") as f:
+                    f.write(inlist1_star_file_string)
+                with open(inlist_star2_run_fname, "w") as f:
+                    f.write(inlist2_star_file_string)
+
+            elif self.run_id == "mesastar":
+                # make a copy of namelists to save items
+                data = self.namelists_for_run.copy()
+                inlist_star_run_fname = folder_name / self._defaultStarRunInlistName
+
+                inlist_star_file_string = ""
+                for key in data:
+                    if key in self._defaultStarNamelists:
+                        inlist_star_file_string = dump_dict_to_namelist_string(
+                            data=data[key], namelist=key, array_inline=False
+                        )
+
+                # save namelists to file
+                with open(inlist_star_run_fname, "w") as f:
+                    f.write(inlist_star_file_string)
+
+            else:
+                sys.exit(
+                    f"{self.run_id}: unknown id for creating run of binary namelists"
+                )
+
         else:
             sys.exit(f"{loc_id} is not a valid option")
