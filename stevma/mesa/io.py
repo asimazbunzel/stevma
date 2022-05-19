@@ -15,7 +15,7 @@ class NoSingleValueFoundException(Exception):
     pass
 
 
-def load_yaml(fname: Union[str, Path]):
+def load_yaml(fname: Union[str, Path]) -> dict:
     """Load configuration file with YAML format
 
     Parameters
@@ -35,7 +35,7 @@ def load_yaml(fname: Union[str, Path]):
         return yaml.load(f, Loader=yaml.FullLoader)
 
 
-def parse_fortran_value_to_python(value):
+def parse_fortran_value_to_python(value: str = ""):
     """Try to parse a single value, if no single value is matched it raises an exception
 
     Parameters
@@ -116,7 +116,7 @@ def parse_python_value_to_fortran(value):
     return parsed_value
 
 
-def namelist_string_to_dict(buffer: str = ""):
+def namelist_string_to_dict(buffer: str = "") -> dict:
     """From a string containing a fortran namelist, group elements of it into a dictionary
 
     Parameters

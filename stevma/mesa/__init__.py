@@ -77,6 +77,7 @@ class MESArun(object):
     _defaultStarNamelists = ("star_job", "eos", "kap", "controls", "pgstar")
     _defaultBinaryNamelists = ("binary_job", "binary_controls", "binary_pgstar")
 
+    # name of files where namelists are saved
     _defaultInitInlistName = "inlist"
     _defaultProjectInlistName = "inlist_project"
     _defaultBinaryRunInlistName = "inlist_binary"
