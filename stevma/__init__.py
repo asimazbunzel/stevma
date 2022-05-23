@@ -15,6 +15,7 @@ def __signal_handler(signal, frame):
     """Callback for CTRL-C"""
     end()
 
+
 def end():
     """Stop manager"""
 
@@ -22,12 +23,14 @@ def end():
 
     sys.exit(0)
 
+
 def start():
     """Start manager"""
 
     logger.info("manager started")
 
     pass
+
 
 def main():
     """Main driver for stellar evolution manager"""

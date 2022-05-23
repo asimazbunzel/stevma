@@ -82,6 +82,7 @@ LOGGING_CFG = {
     },
 }
 
+
 def set_logger():
     """Build and return a logger
 
