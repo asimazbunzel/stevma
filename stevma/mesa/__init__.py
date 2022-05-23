@@ -774,3 +774,40 @@ class MESArun(object):
 
         else:
             sys.exit(f"{loc_id} is not a valid option")
+
+    def copy_column_list_files(self, filenames: list = []) -> None:
+        """Copy column list file with the columns that will be saved in a MESA run
+
+        Parameters
+        ----------
+        fname : `str / Path`
+            Name of the file to be copied. These are the history.list, profile.list or
+            binary_history.list files from the MESA source code
+        """
+
+        # default names as found in the MESA source code
+        _profile_filename = "profile_columns.list"
+        _history_filename = "history_columns.list"
+        _binary_history_filename = "binary_history_columns.list"
+
+        # in case nothing is sent, simply copy the default files of the MESA source code
+        if len(filenames) == 0:
+            # first, copy the mesastar files: history & profile lists
+            profile_infile = self.mesa_dir / "star/defaults" / _profile_filename
+            history_infile = self.mesa_dir / "star/defaults" / _history_filename
+
+            profile_outfile = self.template_directory / _profile_filename
+            history_outfile = self.template_directory / _history_filename
+
+            copyfile(profile_infile, profile_outfile)
+            copyfile(history_infile, history_outfile)
+
+            # if this is a binary evolution copy the binary history columns file
+            if self.is_binary_evolution:
+                binary_history_infile = (
+                    self.mesa_dir / "star/defaults" / _binary_history_filename
+                )
+                binary_history_outfile = (
+                    self.template_directory / _binary_history_filename
+                )
+                copyfile(binary_history_infile, binary_history_outfile)
