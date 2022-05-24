@@ -6,7 +6,8 @@ from pathlib import Path
 import signal
 import sys
 
-from stevma.io.logger import logger
+from stevma.io.logger import logger, LOG_FILENAME
+from stevma.base import Manager
 
 __version__ = "0.0.1"
 
@@ -29,13 +30,16 @@ def start():
 
     logger.info("manager started")
 
-    pass
+    # if only wanting to print name of log name
+    if core.args.log_fname:
+        print(f"LOG FILENAME is: `{LOG_FILENAME}`")
+        sys.exit(0)
 
 
 def main():
     """Main driver for stellar evolution manager"""
 
-    logger.info("start manager")
+    logger.info("initialize manager")
 
     # catch CTRL-C signal
     signal.signal(signal.SIGINT, __signal_handler)
@@ -47,6 +51,10 @@ def main():
     logger.info(
         f"{platform.python_implementation()} {platform.python_version()} detected"
     )
+
+    # main driver
+    global core
+    core = Manager()
 
     # start manager
     start()
