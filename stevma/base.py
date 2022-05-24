@@ -105,9 +105,21 @@ class Manager(object):
     def load_config_file(self) -> dict:
         """Load configuration file with options used by the manager"""
 
-        logger.info("load settings from file")
+        logger.info("loading settings from file")
 
         if not self.args.config_fname.exists():
             logger.critical(f"no such file found: {self.args.config_fname}")
 
         return load_yaml(self.args.config_fname)
+
+    def load_meshgrid(self) -> dict:
+        """Load mesh of stellar evolution models to compute/analyze"""
+
+        logger.info("loading mesh of stellar evolution models")
+
+        fname = self.config["runs"]["meshgrid_filename"]
+
+        if not fname.exists():
+            logger.critical(f"no such file found: {fname}")
+
+        return load_yaml(fname)
