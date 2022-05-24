@@ -6,33 +6,11 @@ import re
 import sys
 from typing import Union
 
-import yaml
-
 
 class NoSingleValueFoundException(Exception):
     """Class for handling exceptions"""
 
     pass
-
-
-def load_yaml(fname: Union[str, Path]) -> dict:
-    """Load configuration file with YAML format
-
-    Parameters
-    ----------
-    fname : `str / Path`
-        YAML filename
-
-    Returns
-    -------
-    `yaml.load`
-    """
-
-    if isinstance(fname, Path):
-        fname = str(fname)
-
-    with open(fname, "r") as f:
-        return yaml.load(f, Loader=yaml.FullLoader)
 
 
 def parse_fortran_value_to_python(value: str = ""):
