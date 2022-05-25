@@ -1,11 +1,14 @@
 """Main driver for stellar evolution manager"""
 
 import argparse
+import os
 from pathlib import Path
 import sys
 
 import pprint
 
+from stevma.mesa import _defaultStarNamelists, _defaultBinaryNamelists
+from stevma.mesa.mesa import get_mesa_defaults
 from stevma.io.io import load_yaml
 from stevma.io.logger import logger
 
@@ -39,7 +42,8 @@ class Manager(object):
         self.config = self.load_config_file()
 
         # load mesh of stellar evolution models
-        self.meshgrid = self.load_meshgrid()
+        self.meshgrid = None
+        self.set_meshgrid()
 
     def init_args(self):
         """Initialize parser of arguments from the command line"""
@@ -123,10 +127,10 @@ class Manager(object):
 
         return load_yaml(self.args.config_fname)
 
-    def load_meshgrid(self) -> dict:
-        """Load mesh of stellar evolution models to compute/analyze"""
+    def _load_meshgrid(self) -> dict:
+        """Load mesh of stellar evolution models from a file"""
 
-        logger.info("loading mesh of stellar evolution models")
+        logger.info("loading file with mesh of stellar evolution models")
 
         fname = Path(self.config["runs"]["meshgrid_filename"])
 
@@ -135,3 +139,29 @@ class Manager(object):
             sys.exit(1)
 
         return load_yaml(fname)
+
+    def set_meshgrid(self) -> None:
+        """Create grid of evolutionary models"""
+
+        # get dict of parameters that will be changing in the grid, each key of the dict
+        # corresponds to a certain namelist of the MESA source code
+        model_grid = self._load_meshgrid()
+
+        # need MESA defaults parameters to check whether the arguments of the meshgrid are valid
+        _MESADefaults = get_mesa_defaults(mesa_dir=os.environ["MESA_DIR"])
+
+        # check that each key in the dict grid is actually a valid namelist
+        namelists = [namelist for namelist in _defaultStarNamelists]
+        namelists.extend(([namelist for namelist in _defaultBinaryNamelists]))
+        for key in model_grid.keys():
+            if key not in namelists:
+                logger.critical(f"namelist `{key}` not present in MESA source code")
+                sys.exit(1)
+            else:
+                tmpDict = model_grid[key]
+                for subkey in tmpDict.keys():
+                    if subkey not in _MESADefaults.get(key):
+                        logger.critical(
+                            f"option `{subkey}` not valid (not found in MESA defaults)"
+                        )
+                        sys.exit(1)
