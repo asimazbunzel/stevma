@@ -4,6 +4,8 @@ import argparse
 from pathlib import Path
 import sys
 
+import pprint
+
 from stevma.io.io import load_yaml
 from stevma.io.logger import logger
 
@@ -20,16 +22,24 @@ class Manager(object):
         # command line arguments
         self.args = self.parse_args()
 
+        if self.args.config_fname is None:
+            logger.critical("config-file cannot be empty")
+            sys.exit(1)
+
         # always use pathlib module for files
         if isinstance(self.args.config_fname, str):
             # in case no config file, use defaults
             if len(self.args.config_fname) == 0:
                 logger.critical("empty configuration file. using defaults")
+                sys.exit(1)
 
             self.args.config_fname = Path(self.args.config_fname)
 
         # load config
         self.config = self.load_config_file()
+
+        # load mesh of stellar evolution models
+        self.meshgrid = self.load_meshgrid()
 
     def init_args(self):
         """Initialize parser of arguments from the command line"""
@@ -50,7 +60,7 @@ class Manager(object):
         )
 
         parser.add_argument(
-            "--C",
+            "-C",
             "--config-file",
             dest="config_fname",
             help="name of configuration file",
@@ -109,6 +119,7 @@ class Manager(object):
 
         if not self.args.config_fname.exists():
             logger.critical(f"no such file found: {self.args.config_fname}")
+            sys.exit(1)
 
         return load_yaml(self.args.config_fname)
 
@@ -117,9 +128,10 @@ class Manager(object):
 
         logger.info("loading mesh of stellar evolution models")
 
-        fname = self.config["runs"]["meshgrid_filename"]
+        fname = Path(self.config["runs"]["meshgrid_filename"])
 
         if not fname.exists():
             logger.critical(f"no such file found: {fname}")
+            sys.exit(1)
 
         return load_yaml(fname)
