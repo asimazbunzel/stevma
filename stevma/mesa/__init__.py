@@ -7,10 +7,13 @@ from shutil import copyfile
 import subprocess
 import sys
 
-import yaml
-
+from stevma.io.io import load_yaml
 from stevma.mesa.mesa import MESAMainNamelists, get_mesa_defaults
-from stevma.mesa.io import load_yaml, dump_dict_to_namelist_string
+from stevma.mesa.io import dump_dict_to_namelist_string
+
+# default name of namelists of the MESA source code
+_defaultStarNamelists = ("star_job", "eos", "kap", "controls", "pgstar")
+_defaultBinaryNamelists = ("binary_job", "binary_controls", "binary_pgstar")
 
 
 class MESArun(object):
