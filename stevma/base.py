@@ -167,5 +167,9 @@ class Manager(object):
             sys.exit(1)
 
         d = create_meshgrid_from_dict(
-            d=model_grid, condition=lambda d: True if d["m1"] < d["m2"] else False
+            d=model_grid,
+            conditions=[
+                lambda d: True if d["m1"] < d["m2"] else False,
+                lambda d: True if d["m2"] / d["m1"] < 0.5 else False,
+            ],
         )

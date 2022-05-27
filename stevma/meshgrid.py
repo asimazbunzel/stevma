@@ -57,9 +57,7 @@ def check_for_valid_namelist_options(d: dict = {}, mesa_dir: str = "") -> bool:
     return is_okay
 
 
-def create_meshgrid_from_dict(
-    d: dict = {}, condition: Callable[[Any], Any] = lambda x: x
-) -> dict:
+def create_meshgrid_from_dict(d: dict = {}, conditions: list = []) -> dict:
     """Function that creates the meshgrid from a dictionary
 
     Parameters
@@ -122,19 +120,20 @@ def create_meshgrid_from_dict(
     for key in meshgrid.keys():
 
         tmpDict = meshgrid.get(key)
-        if True:
-            if "m1" in tmpDict and "m2" in tmpDict:
+        if len(conditions) > 0:
+            for k, condition in enumerate(conditions):
                 if condition(tmpDict):
                     logger.debug(
-                        f"m1 < m2 ({tmpDict['m1']}, {tmpDict['m2']}): going to remove index {key} from meshgrid"
+                        f"(m1={tmpDict['m1']}, m2={tmpDict['m2']}) failed condition {k}: going to remove index {key} from meshgrid"
                     )
                     keys_to_pop.append(f"{key}")
 
     # pop keys that do not fulfill condition
-    for key in keys_to_pop:
-        meshgrid.pop(key)
+    if len(keys_to_pop) > 0:
+        for key in keys_to_pop:
+            meshgrid.pop(key)
 
-    print(meshgrid)
+    return meshgrid
 
 
 def get_number_of_gridpoints(d: dict = {}) -> int:
