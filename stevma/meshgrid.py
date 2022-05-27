@@ -124,7 +124,7 @@ def create_meshgrid_from_dict(d: dict = {}, conditions: list = []) -> dict:
             for k, condition in enumerate(conditions):
                 if condition(tmpDict):
                     logger.debug(
-                        f"(m1={tmpDict['m1']}, m2={tmpDict['m2']}) failed condition {k}: going to remove index {key} from meshgrid"
+                        f"failed condition {k}: going to remove index {key} from meshgrid"
                     )
                     keys_to_pop.append(f"{key}")
 
