@@ -6,6 +6,10 @@ Each of them present in the dictionary is a dictionary in itself, such that the 
 are varied in the grid are keys of them and should contain lists or numbers or booleans\
 """
 
+from typing import Any, Callable
+
+import numpy as np
+
 from stevma.io.logger import logger
 from stevma.mesa import _defaultStarNamelists, _defaultBinaryNamelists
 from stevma.mesa.mesa import get_mesa_defaults
@@ -51,6 +55,86 @@ def check_for_valid_namelist_options(d: dict = {}, mesa_dir: str = "") -> bool:
                     break
 
     return is_okay
+
+
+def create_meshgrid_from_dict(
+    d: dict = {}, condition: Callable[[Any], Any] = lambda x: x
+) -> dict:
+    """Function that creates the meshgrid from a dictionary
+
+    Parameters
+    ----------
+    d : `dict`
+        Dictionary with different options of the meshgrid
+
+    Returns
+    -------
+    grid : `dict`
+        Dictionary with the meshgrid
+    """
+
+    # get number of possible gridpoints (might be reduced later on)
+    estimated_number_gridpoints = get_number_of_gridpoints(d)
+
+    # generate a list of identifiers based on the number of gridpoints. it starts with 0 and goes
+    # up to (estimated_number_gridpoints - 1)
+    identifiers = range(estimated_number_gridpoints)
+
+    # dictionary that contains the actual runs, each key is a different run
+    meshgrid = dict()
+    for k in identifiers:
+        meshgrid.update({f"{k}": dict()})
+
+    # create a tmp dict without namelists, but use them separately
+    tmpDict = dict()
+    option_names = []
+    for namelist in d.keys():
+        namelist_options = d.get(namelist)
+        for option in namelist_options.keys():
+            option_names.append(option)
+
+            values = namelist_options[option]
+            if not isinstance(values, list):
+                try:
+                    values = [values]
+                except Exception as e:
+                    logger.critical(f"{e}")
+
+            tmpDict[option] = values
+
+    # once the dictionary is set, use numpy to create the meshgrid
+    grid = np.meshgrid(*list(tmpDict.values()))
+
+    # each element in the grid is then separated into different dictionaries, one for each run
+    for k in range(len(grid[0][0])):
+        for j in range(len(grid)):
+            parsed_value = grid[j][0][k]
+            try:
+                meshgrid.get(f"{k}").update({option_names[j]: int(parsed_value)})
+            except ValueError:
+                try:
+                    meshgrid.get(f"{k}").update({option_names[j]: float(parsed_value)})
+                except ValueError:
+                    meshgrid.get(f"{k}").update({option_names[j]: parsed_value})
+
+    # now we check some important stuff for binary evolution such as to avoid repeting simulations
+    keys_to_pop = []
+    for key in meshgrid.keys():
+
+        tmpDict = meshgrid.get(key)
+        if True:
+            if "m1" in tmpDict and "m2" in tmpDict:
+                if condition(tmpDict):
+                    logger.debug(
+                        f"m1 < m2 ({tmpDict['m1']}, {tmpDict['m2']}): going to remove index {key} from meshgrid"
+                    )
+                    keys_to_pop.append(f"{key}")
+
+    # pop keys that do not fulfill condition
+    for key in keys_to_pop:
+        meshgrid.pop(key)
+
+    print(meshgrid)
 
 
 def get_number_of_gridpoints(d: dict = {}) -> int:
