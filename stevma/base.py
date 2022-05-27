@@ -9,7 +9,7 @@ import pprint
 
 from stevma.io.io import load_yaml
 from stevma.io.logger import logger
-from stevma.meshgrid import check_for_valid_namelist_options, get_number_of_gridpoints
+from stevma.meshgrid import check_for_valid_namelist_options, create_meshgrid_from_dict
 
 
 class Manager(object):
@@ -166,5 +166,6 @@ class Manager(object):
         if not check_for_valid_namelist_options(d=model_grid, mesa_dir=self.mesa_dir):
             sys.exit(1)
 
-        number_of_gridpoints = get_number_of_gridpoints(d=model_grid)
-        print(number_of_gridpoints)
+        d = create_meshgrid_from_dict(
+            d=model_grid, condition=lambda d: True if d["m1"] < d["m2"] else False
+        )
