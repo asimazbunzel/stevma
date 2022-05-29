@@ -9,6 +9,7 @@ import pprint
 
 from stevma.io.io import load_yaml
 from stevma.io.logger import logger
+from stevma.mesa import MESArun
 from stevma.meshgrid import check_for_valid_namelist_options, create_meshgrid_from_dict
 
 
@@ -58,7 +59,9 @@ class Manager(object):
 
         # load mesh of stellar evolution models
         self.meshgrid = None
+
         self.set_meshgrid()
+        self.create_MESAruns()
 
     def init_args(self):
         """Initialize parser of arguments from the command line"""
@@ -155,8 +158,10 @@ class Manager(object):
 
         return load_yaml(fname)
 
-    def set_meshgrid(self) -> None:
+    def set_meshgrid(self, conditions: list = []) -> None:
         """Create grid of evolutionary models"""
+
+        logger.info("creating meshgrid of models")
 
         # get dict of parameters that will be changing in the grid, each key of the dict
         # corresponds to a certain namelist of the MESA source code
@@ -166,10 +171,43 @@ class Manager(object):
         if not check_for_valid_namelist_options(d=model_grid, mesa_dir=self.mesa_dir):
             sys.exit(1)
 
-        d = create_meshgrid_from_dict(
-            d=model_grid,
-            conditions=[
-                lambda d: True if d["m1"] < d["m2"] else False,
-                lambda d: True if d["m2"] / d["m1"] < 0.5 else False,
-            ],
-        )
+        self.meshgrid = create_meshgrid_from_dict(d=model_grid, conditions=conditions)
+        #  [
+        #  lambda d: True if d["m1"] < d["m2"] else False,
+        #  lambda d: True if d["m2"] / d["m1"] < 0.5 else False,
+        #  ],
+        #  )
+
+    def create_MESAruns(self) -> None:
+        """Create a dictionary with each key being a different MESArun object"""
+
+        logger.info("creating MESArun objects for each element in the meshgrid")
+
+        if self.meshgrid is None:
+            logger.critical(
+                "meshgrid object is not defined. need to call `set_meshgrid` before"
+            )
+
+        # some useful dictionaries for creating MESArun objects
+        runsDict = self.config.get("runs")
+        templateDict = self.config.get("template")
+        mesaDict = self.config.get("mesa")
+
+        # loop over meshgrid to create MESArun objects
+        self.MESAruns = dict()
+        for key in self.meshgrid.keys():
+            self.MESAruns[key] = MESArun(
+                identifier=int(key),
+                template_directory=templateDict.get("output_directory"),
+                run_root_directory=runsDict.get("output_directory"),
+                is_binary_evolution=templateDict.get("is_binary_evolution"),
+                run_id=runsDict.get("id"),
+                mesa_dir=mesaDict.get("mesa_dir"),
+                mesasdk_dir=mesaDict.get("mesasdk_root"),
+                mesa_caches_dir=mesaDict.get("mesa_caches_dir"),
+            )
+
+    def dump_MESAruns_to_database(self) -> None:
+        """Save information of MESAruns into a database"""
+
+        return None
