@@ -262,10 +262,6 @@ class MESArun(object):
                         elif "#{template}" in value:
                             arr = value.split("/")
                             value = f"{self.template_directory}/{arr[-1]}"
-                        else:
-                            sys.exit(
-                                "could not find string matching #{run} or #{template} to replace in extra_binary_controls_inlist1_name"
-                            )
                         nonDefaultOptions[namelist][key] = value
                         continue
 
@@ -392,6 +388,12 @@ class MESArun(object):
                 self.namelists_for_template = self.__pop_empty_namelists__(
                     d=mesabinaryOptions
                 )
+
+                starOptions = self.__get_non_default_values_for_namelists__(
+                    Options=self._MESAOptions, namelists=self._defaultStarNamelists
+                )
+
+                self.namelists_for_template.update(starOptions)
 
             elif self.run_id == "mesabin2dco":
                 sys.exit("mesabin2dco template project not ready to be used")
@@ -722,23 +724,42 @@ class MESArun(object):
                 if "log_directory" not in data2["controls"]:
                     data2["controls"]["log_directory"] = "LOGS2"
 
+                # patch to add call to inlist_project file from inside inlist_star1 and inlist_star2 files
+                for namelist in self._defaultStarNamelists:
+                    if (
+                        namelist in self.namelists_for_template
+                        and len(self.namelists_for_template.get(namelist)) > 0
+                    ):
+                        if namelist not in data1:
+                            data1[namelist] = dict()
+                        if namelist not in data2:
+                            data2[namelist] = dict()
+                        data1[namelist][f"read_extra_{namelist}_inlist1"] = True
+                        data2[namelist][f"read_extra_{namelist}_inlist1"] = True
+                        data1[namelist][
+                            f"extra_{namelist}_inlist1_name"
+                        ] = f"{self.template_directory}/{self._defaultProjectInlistName}"
+                        data2[namelist][
+                            f"extra_{namelist}_inlist1_name"
+                        ] = f"{self.template_directory}/{self._defaultProjectInlistName}"
+
                 # create string with namelists. one for each needed: binary, star1 & star2
                 inlist_binary_file_string = ""
                 inlist1_star_file_string = ""
                 inlist2_star_file_string = ""
                 for key in data:
                     if key in self._defaultBinaryNamelists:
-                        inlist_binary_file_string = dump_dict_to_namelist_string(
+                        inlist_binary_file_string += dump_dict_to_namelist_string(
                             data=data[key], namelist=key, array_inline=False
                         )
                 for key in data1:
                     if key in self._defaultStarNamelists:
-                        inlist1_star_file_string = dump_dict_to_namelist_string(
+                        inlist1_star_file_string += dump_dict_to_namelist_string(
                             data=data1[key], namelist=key, array_inline=False
                         )
                 for key in data2:
                     if key in self._defaultStarNamelists:
-                        inlist2_star_file_string = dump_dict_to_namelist_string(
+                        inlist2_star_file_string += dump_dict_to_namelist_string(
                             data=data2[key], namelist=key, array_inline=False
                         )
 
