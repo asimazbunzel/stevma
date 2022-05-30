@@ -385,13 +385,9 @@ class MESArun(object):
 
                 # for these, we need to set up inlist(1) & inlist(2) if not present already
                 if "inlist_names(1)" not in mesabinaryOptions["binary_job"]:
-                    mesabinaryOptions["binary_job"][
-                        "inlist_names(1)"
-                    ] = f"{self.run_directory}/inlist1"
+                    mesabinaryOptions["binary_job"]["inlist_names(1)"] = "inlist1"
                 if "inlist_names(2)" not in mesabinaryOptions["binary_job"]:
-                    mesabinaryOptions["binary_job"][
-                        "inlist_names(2)"
-                    ] = f"{self.run_directory}/inlist2"
+                    mesabinaryOptions["binary_job"]["inlist_names(2)"] = "inlist2"
 
                 self.namelists_for_template = self.__pop_empty_namelists__(
                     d=mesabinaryOptions
