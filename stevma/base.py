@@ -62,6 +62,7 @@ class Manager(object):
 
         self.set_meshgrid()
         self.create_MESAruns()
+        self.set_MESAruns_structure()
 
     def init_args(self):
         """Initialize parser of arguments from the command line"""
@@ -205,7 +206,41 @@ class Manager(object):
                 mesa_dir=mesaDict.get("mesa_dir"),
                 mesasdk_dir=mesaDict.get("mesasdk_root"),
                 mesa_caches_dir=mesaDict.get("mesa_caches_dir"),
+                **self.meshgrid[key],
             )
+
+            # load options for MESA simulations
+            self.MESAruns[key].load_options(templateDict.get("options_filename"))
+
+            # get dictionaries for template & run namelists
+            self.MESAruns[key].set_template_namelists()
+            self.MESAruns[key].set_run_namelists()
+
+    def set_MESAruns_structure(self):
+        """Method that takes care of creating the template & run folders for the meshgrid of
+        stellar evolution models
+        """
+
+        # some useful dictionaries for creating MESArun objects
+        runsDict = self.config.get("runs")
+        templateDict = self.config.get("template")
+        mesaDict = self.config.get("mesa")
+
+        # create template stucture of MESAruns just once
+        keys = list(self.meshgrid.keys())
+        key0 = keys[0]
+        self.MESAruns[key0].create_template_structure(
+            copy_default_workdir=True, replace=templateDict.get("overwrite")
+        )
+        self.MESAruns[key0].save_namelists_to_file(name_id="template")
+
+        # compile it
+        self.MESAruns[key0].compile_template()
+
+        # create and store namelists into each run folder
+        for key in self.meshgrid.keys():
+            self.MESAruns[key].create_run_structure()
+            self.MESAruns[key].save_namelists_to_file(name_id="run")
 
     def dump_MESAruns_to_database(self) -> None:
         """Save information of MESAruns into a database"""
