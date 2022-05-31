@@ -11,7 +11,7 @@ from typing import Any, Callable
 import numpy as np
 
 from stevma.io.logger import logger
-from stevma.mesa import _defaultStarNamelists, _defaultBinaryNamelists
+from stevma.mesa import mesa_namelists
 from stevma.mesa.mesa import get_mesa_defaults
 
 
@@ -35,8 +35,8 @@ def check_for_valid_namelist_options(d: dict = {}, mesa_dir: str = "") -> bool:
     _MESADefaults = get_mesa_defaults(mesa_dir=mesa_dir)
 
     # check that each key in the dict grid is actually a valid namelist
-    namelists = [namelist for namelist in _defaultStarNamelists]
-    namelists.extend(([namelist for namelist in _defaultBinaryNamelists]))
+    namelists = [namelist for namelist in mesa_namelists.star_namelists]
+    namelists.extend(([namelist for namelist in mesa_namelists.binary_namelists]))
 
     is_okay = True
     for key in d.keys():
