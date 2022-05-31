@@ -6,6 +6,8 @@ import re
 import sys
 from typing import Union
 
+from stevma.io.logger import logger
+
 
 class NoSingleValueFoundException(Exception):
     """Class for handling exceptions"""
@@ -254,9 +256,10 @@ def dump_dict_to_namelist_string(
     # if there is no info in the dictionary, return the namelist string
     # either way
     if len(data) == 0:
-        print(f"no items found in {data}")
+        logger.info(f"no items found in {namelist}: {data}")
         lines.append(f"/ ! end of {namelist} namelist")
         namelist_string = "\n".join(lines) + "\n"
+        return namelist_string
 
     # loop over the dictionary and append to array
     for key, value in data.items():
