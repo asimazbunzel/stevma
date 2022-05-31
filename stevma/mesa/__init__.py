@@ -3,7 +3,7 @@
 
 from pathlib import Path
 from typing import Union
-from shutil import copyfile
+from shutil import copyfile, copytree, rmtree
 import subprocess
 import sys
 
@@ -83,6 +83,17 @@ class MESArun(object):
         "binary_run.f90",
         "run_binary_extras.f90",
         "run_star_extras.f90",
+    )
+    _defaultSrcFilenamesBin2dco = (
+        "bin2dco_controls.defaults",
+        "bin2dco_misc.inc",
+        "binary_run.f90",
+        "run_binary_extras.f90",
+        "run_star_extras.f90",
+    )
+    _defaultModulesBin2dco = (
+        "ce",
+        "core_collapse",
     )
 
     # name of files where namelists are saved
@@ -464,16 +475,12 @@ class MESArun(object):
 
         if self.is_binary_evolution:
 
-            if self.run_id == "mesabinary":
+            if self.run_id == "mesabinary" or self.run_id == "mesabin2dco":
                 mesabinaryOptions = self.__get_non_default_values_for_namelists__(
                     Options=self.variables, namelists=mesa_namelists.binary_namelists
                 )
 
                 runOptions = mesabinaryOptions
-
-            elif self.run_id == "mesabin2dco":
-                logger.critical("mesabin2dco template project not ready to be used")
-                sys.exit(1)
 
             else:
                 logger.critical(
@@ -499,6 +506,7 @@ class MESArun(object):
         self,
         copy_default_workdir: bool = True,
         replace: bool = True,
+        extra_src_folders: list = [],
         extra_src_files: list = [],
         extra_makefile: list = [],
         extra_template_files: list = [],
@@ -508,10 +516,14 @@ class MESArun(object):
         Parameters
         ----------
         copy_default_workdir : `bool`
-            Flag to choose whether to copy the default workdir of MESA
+            Flag to choose whether to copy the default workdir of MESA. This will depend on the
+            type of run: `mesastar`, `mesabinary`, `mesabin2dco`
 
         replace : `bool`
             Flag to control if files in template folder will be replaced or not
+
+        extra_src_folders : `list`
+            List of folders that should go in the src folder of the template
 
         extra_src_files : `list`
             List of files that should go in the src folder of the template
@@ -523,55 +535,93 @@ class MESArun(object):
             List of files that should be copied in the template folder
         """
 
+        if replace:
+            items = self.template_directory.glob("*")
+            for item in items:
+                if item.is_file():
+                    item.unlink()
+                else:
+                    rmtree(item)
+
         # create folders in template directory
         for name in self._defaultFolderNames:
             folder_name = self.template_directory / name
             if not folder_name.is_dir():
                 folder_name.mkdir(parents=True)
             else:
-                # in case replace is true, delete everything inside folder if already exists
-                if replace:
-                    for p in folder_name.glob("*"):
-                        p.unlink()
+                logger.error(f"could not copy folder {folder_name}. folder not found")
 
         if copy_default_workdir:
-            # set some useful variable names
+            # set some useful variable names for copy stuff to src folder of template directory
+            # depengin on the type of run, `mesastar`, `mesabinary` or `mesabin2dco`
             if self.is_binary_evolution:
-                mesa_folder = "binary"
-                src_files = self._defaultSrcFilenamesBinary
+                if self.run_id == "mesabinary":
+                    mesa_folder = self.mesa_dir / "binary/work"
+                    src_files = self._defaultSrcFilenamesBinary
+
+                elif self.run_id == "mesabin2dco":
+                    mesa_folder = self.mesabin2dco_dir
+                    src_files = self._defaultSrcFilenamesBin2dco
+
             else:
-                mesa_folder = "star"
+                mesa_folder = self.mesa_dir / "star/work"
                 src_files = self._defaultSrcFilenamesStar
 
-            # loop over common scripts of MESA
-            for file in self._defaultScriptFilenames:
-                fname = self.mesa_dir / mesa_folder / "work" / file
-
-                if file == "makefile":
-                    output_folder = self.template_directory / "make"
-                    fname = self.mesa_dir / mesa_folder / "work/make" / file
-                else:
-                    output_folder = self.template_directory
+            # copy files to src folder of template directory
+            for file in src_files:
+                fname = mesa_folder / "src" / file
+                output_folder = self.template_directory / "src"
+                output_filename = output_folder / file
 
                 # to use copyfile, need to set the name of the output, not just the folder
                 if fname.is_file():
-                    output_file = output_folder / file
-                    copyfile(fname, output_file)
+                    copyfile(fname, output_filename)
                 else:
-                    print(f"could not copy file {fname}. file not found")
+                    logger.error(f"could not copy file {fname}. file not found")
 
-            # also loop over src files depending on the type of run
-            for file in src_files:
-                fname = self.mesa_dir / mesa_folder / "work/src" / file
-                output_folder = self.template_directory / "src"
+            # loop over common scripts of MESA
+            for file in self._defaultScriptFilenames:
+                fname = mesa_folder / file
 
+                # be careful with makefile which is located inside the make folder
+                if file == "makefile":
+                    output_folder = self.template_directory / "make"
+                    fname = mesa_folder / "make" / file
+                else:
+                    output_folder = self.template_directory
+
+                output_filename = output_folder / file
                 if fname.is_file():
-                    output_file = output_folder / file
-                    copyfile(fname, output_file)
+                    copyfile(fname, output_filename)
                 else:
-                    print(f"could not copy file {fname}. file not found")
+                    logger.error(f"could not copy file {fname}. file not found")
+
+            # copy mesabin2dco custom modules: `ce` and `core_collapse`
+            if self.run_id == "mesabin2dco":
+                for module_name in self._defaultModulesBin2dco:
+                    folder_name = mesa_folder / "src" / module_name
+
+                    output_folder = self.template_directory / "src" / module_name
+                    if folder_name.is_dir():
+                        copytree(folder_name, output_folder)
+                    else:
+                        logger.error(
+                            f"could not copy folder {folder_name}. folder not found"
+                        )
 
         else:
+            # create folders inside src/
+            if len(extra_src_folders) > 0:
+                for name in extra_src_folders:
+                    folder_name = self.template_directory / "src" / name
+                    if not folder_name.is_dir():
+                        folder_name.mkdir(parents=True)
+                    else:
+                        # in case replace is true, delete everything inside folder if already exists
+                        if replace:
+                            for p in folder_name.glob("*"):
+                                p.unlink()
+
             # try to copy extra files
             if len(extra_src_files) > 0:
                 for file in extra_src_files:
@@ -639,23 +689,6 @@ class MESArun(object):
         mesa_env_vars_string += f"export MESASDK_ROOT={self.mesasdk_dir}; "
         mesa_env_vars_string += f"source $MESASDK_ROOT/bin/mesasdk_init.sh"
 
-        # for mesabin2dco type of run, compile the CE and CC modules
-        if self.run_id == "mesabin2dco":
-            try:
-                p = subprocess.Popen(
-                    f"{mesa_env_vars_string}; chmod +x mk_mods; ./mk_mods",
-                    shell=True,
-                    executable="/bin/bash",
-                    cwd=self.template_directory,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
-                )
-                stdout, stderr = p.communicate()
-                if stderr is not None:
-                    print(f"WARNING: could not compile CE & CC modules: {stderr}")
-            except Exception as e:
-                print(e)
-
         # compile MESA source code
         try:
             p = subprocess.Popen(
@@ -687,12 +720,13 @@ class MESArun(object):
             folder_name = self.template_directory
 
             # also get names of files
-            if self.run_id == "mesabinary" or self.run_id == "mesastar":
+            if (
+                self.run_id == "mesabinary"
+                or self.run_id == "mesastar"
+                or self.run_id == "mesabin2dco"
+            ):
                 inlist_fname = folder_name / self._defaultInitInlistName
                 inlist_project_fname = folder_name / self._defaultProjectInlistName
-
-            elif self.run_id == "mesabin2dco":
-                inlist_fname = folder_name / "inlist_bin2dco"
 
             else:
                 logger.critical(
