@@ -9,6 +9,15 @@ from typing import Union
 from stevma.mesa.io import parse_fortran_value_to_python
 
 
+class MESANamelists(object):
+    """Namelists of MESA"""
+
+    def __init__(self):
+        self.star_namelists = ("star_job", "controls", "pgstar", "eos", "kap")
+        self.binary_namelists = ("binary_job", "binary_controls")
+        self.bin2dco_namelists = ("bin2dco_controls",)
+
+
 class MESAMainNamelists(object):
     """Structure of the most important files for initializing a MESA simulation"""
 
@@ -31,16 +40,17 @@ class MESAMainNamelists(object):
         self.namelists_for_mesabin2dco = {
             "bin2dco_controls": {
                 "do_star_plus_star": False,
-                "star_plus_star_filename": "#{template}/inlist_star_plus_star",
-                "star_plus_pm_filename": "#{template}/inlist_star_plus_pm",
-                "cc1_inlist_filename": "#{template}/inlist_cc",
-                "cc2_inlist_filename": "#{template}/inlist_cc",
-                "ce1_inlist_filename": "#{template}/inlist_ce",
-                "ce2_inlist_filename": "#{template}/inlist_ce",
+                "star_plus_star_filename": "inlist_star_plus_star",
+                "star_plus_pm_filename": "inlist_star_plus_pm",
+                "cc1_inlist_filename": "inlist_cc",
+                "cc2_inlist_filename": "inlist_cc",
+                "ce1_inlist_filename": "inlist_ce",
+                "ce2_inlist_filename": "inlist_ce",
                 "stop_after_plus_star": True,
                 "do_kicks": False,
                 "do_kicks_in_one_run": False,
-                "natal_kicks_filename": "grid.data",
+                "natal_kicks_filename": "",
+                "header_lines_to_skip_in_natal_kicks_file": 1,
                 "star_info_at_cc_filename": "cc_data/star_at_core_collapse.data",
                 "binary_info_at_cc_filename": "cc_data/binary_at_core_collapse.data",
                 "add_kick_id_as_suffix": False,
@@ -130,38 +140,45 @@ def get_mesa_defaults(mesa_dir: Union[str, Path] = "") -> dict:
         Dictionary with all MESA defaults
     """
 
-    if mesa_dir == "" and os.environ.get("MESA_DIR") is None:
-        raise ValueError(
-            "`mesa_dir` cannot be empty. also it was not find in the environment variable list"
-        )
+    # if mesa_dir is empty, try to get MESA_DIR from environment variable
+    if mesa_dir == "":
+        if os.environ.get("MESA_DIR") is None:
+            raise ValueError(
+                "`mesa_dir` cannot be empty. also it was not find in the environment variable list"
+            )
 
     # use pathlib
     if isinstance(mesa_dir, str):
         mesa_dir = Path(mesa_dir)
 
-    namelists = (
-        "star_job",
-        "controls",
-        "pgstar",
-        "binary_job",
-        "binary_controls",
-        "eos",
-        "kap",
-    )
-
-    star_namelists = ("star_job", "controls", "pgstar")
-    binary_namelists = ("binary_job", "binary_controls", "binary_pgstar")
+    # load namelists for each MESA module
+    mesaNamelists = MESANamelists()
 
     MESADefaults = dict()
-    for namelist in namelists:
-        if namelist in star_namelists:
-            folder_name = "star"
-        elif namelist in binary_namelists:
-            folder_name = "binary"
-        else:
-            folder_name = namelist
+    if "bin2dco" in str(mesa_dir):
+        fname = mesa_dir / f"src/bin2dco_controls.defaults"
+        MESADefaults["bin2dco_controls"] = namelist_defaults(fname=fname)
 
-        fname = mesa_dir / f"{folder_name}/defaults/{namelist}.defaults"
-        MESADefaults[namelist] = namelist_defaults(fname=fname)
+    else:
+        for namelist in mesaNamelists.star_namelists:
+            # check for proper folder name
+            folder_name = "star"
+            if "eos" in namelist:
+                folder_name = "eos"
+            if "kap" in namelist:
+                folder_name = "kap"
+
+            fname = mesa_dir / f"{folder_name}/defaults/{namelist}.defaults"
+            MESADefaults[namelist] = namelist_defaults(fname=fname)
+
+        for namelist in mesaNamelists.binary_namelists:
+            folder_name = "binary"
+            fname = mesa_dir / f"{folder_name}/defaults/{namelist}.defaults"
+            MESADefaults[namelist] = namelist_defaults(fname=fname)
 
     return MESADefaults
+
+
+mesa_namelists = MESANamelists()
+
+mesa_main_namelists = MESAMainNamelists()

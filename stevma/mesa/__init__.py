@@ -8,12 +8,9 @@ import subprocess
 import sys
 
 from stevma.io.io import load_yaml
-from stevma.mesa.mesa import MESAMainNamelists, get_mesa_defaults
+from stevma.io.logger import logger
+from stevma.mesa.mesa import get_mesa_defaults, mesa_namelists, mesa_main_namelists
 from stevma.mesa.io import dump_dict_to_namelist_string
-
-# default name of namelists of the MESA source code
-_defaultStarNamelists = ("star_job", "eos", "kap", "controls", "pgstar")
-_defaultBinaryNamelists = ("binary_job", "binary_controls", "binary_pgstar")
 
 
 class MESArun(object):
@@ -54,6 +51,9 @@ class MESArun(object):
     mesa_caches_dir : `str / Path`
         Location of the caches dir of MESA
 
+    mesabin2dco_dir : `str / Path`
+        Location of the MESAbin2dco source code
+
     variables : `dict`
         Dictionary with the name and value of the variables to use in the MESA run. This is created
         with the **kwargs if this is the first time creating the object, but is present in the case
@@ -84,8 +84,6 @@ class MESArun(object):
         "run_binary_extras.f90",
         "run_star_extras.f90",
     )
-    _defaultStarNamelists = ("star_job", "eos", "kap", "controls", "pgstar")
-    _defaultBinaryNamelists = ("binary_job", "binary_controls", "binary_pgstar")
 
     # name of files where namelists are saved
     _defaultInitInlistName = "inlist"
@@ -103,9 +101,10 @@ class MESArun(object):
         is_binary_evolution: bool = False,
         run_id: str = "",
         custom_run_name: str = "",
-        mesa_dir: str = "",
-        mesasdk_dir: str = "",
-        mesa_caches_dir: str = "",
+        mesa_dir: Union[str, Path] = "",
+        mesasdk_dir: Union[str, Path] = "",
+        mesa_caches_dir: Union[str, Path] = "",
+        mesabin2dco_dir: Union[str, Path] = "",
         variables: dict = {},
         namelists_for_init: dict = {},
         namelists_for_template: dict = {},
@@ -150,6 +149,17 @@ class MESArun(object):
         # load MESA defaults
         self._MESADefaults = get_mesa_defaults(mesa_dir=self.mesa_dir)
 
+        # try to load mesabin2dco defaults if path is given, else leave it as empty
+        if isinstance(mesabin2dco_dir, str):
+            self.mesabin2dco_dir = Path(mesabin2dco_dir)
+        else:
+            self.mesabin2dco_dir = mesabin2dco_dir
+        try:
+            self._MESAbin2dcoDefaults = get_mesa_defaults(mesa_dir=self.mesabin2dco_dir)
+        except Exception as e:
+            logger.error(e)
+            self._MESAbin2dcoDefaults = None
+
         # hidden name of run
         self.__run_name_from_kwargs__ = ""
 
@@ -173,9 +183,10 @@ class MESArun(object):
                     variables[namelist][key] = value
                     self.__run_name_from_kwargs__ += f"{key}_{value}_"
                 else:
-                    sys.exit(f"could not find {key} in MESA parameter list")
+                    logger.critical(f"could not find {key} in MESA parameter list")
         self.variables = variables
 
+        # use a name for the run, sort of string id
         if custom_run_name != "":
             self.run_name = custom_run_name
         else:
@@ -232,6 +243,12 @@ class MESArun(object):
         if len(Options) == 0:
             raise ValueError(f"`Options` (dict argument) cannot be an empty dictionary")
 
+        # depending on the namelist of MESA, use defaults of MESAbin2dco or MESA
+        if "bin2dco_controls" in namelists:
+            defaultDicts = self._MESAbin2dcoDefaults
+        else:
+            defaultDicts = self._MESADefaults
+
         nonDefaultOptions = dict()
         for namelist in namelists:
             nonDefaultOptions[namelist] = dict()
@@ -266,7 +283,7 @@ class MESArun(object):
                         continue
 
                     # only add those options that do not match defaults
-                    if value != self._MESADefaults.get(namelist)[key]:
+                    if value != defaultDicts.get(namelist)[key]:
                         # this is to replace some template & run strings
                         if isinstance(value, str):
                             if "#{run}" in value:
@@ -289,8 +306,8 @@ class MESArun(object):
             Dictionary to search for empty elements to pop
         """
 
-        namelists = [namelist for namelist in self._defaultStarNamelists]
-        namelists.extend(([namelist for namelist in self._defaultBinaryNamelists]))
+        namelists = [namelist for namelist in mesa_namelists.star_namelists]
+        namelists.extend(([namelist for namelist in mesa_namelists.binary_namelists]))
 
         keys_to_pop = []
         for namelist in namelists:
@@ -323,9 +340,6 @@ class MESArun(object):
 
             return d
 
-        # load main namelists of MESA
-        MESANamelists = MESAMainNamelists()
-
         # first, structure the template for the most important namelist which lives
         # in the `inlist` file
         inlistNamelists = dict()
@@ -333,39 +347,46 @@ class MESArun(object):
 
             if self.run_id == "mesabinary":
                 # need to replace some strings here
-                for namelist in self._defaultBinaryNamelists:
-                    dictNamelist = MESANamelists.namelists_for_mesabinary[namelist]
+                for namelist in mesa_namelists.binary_namelists:
+                    dictNamelist = mesa_main_namelists.namelists_for_mesabinary[
+                        namelist
+                    ]
                     inlistNamelists[namelist] = replace_template_string_in_dict(
                         dictNamelist
                     )
 
             elif self.run_id == "mesabin2dco":
-                dictNamelist = MESANamelists.namelists_for_mesabin2dco[
+                dictNamelist = mesa_main_namelists.namelists_for_mesabin2dco[
                     "bin2dco_controls"
                 ]
-                inlistNamelists["bin2dco_controls"] = replace_template_string_in_dict(
-                    dictNamelist
+                mesabin2dcoOptions = self.__get_non_default_values_for_namelists__(
+                    Options=self._MESAOptions,
+                    namelists=mesa_namelists.bin2dco_namelists,
                 )
+                for namelist in mesabin2dcoOptions.keys():
+                    inlistNamelists[namelist] = mesabin2dcoOptions.get(namelist)
 
             else:
-                sys.exit(
+                logger.critical(
                     f"{self.run_id}: unknown id for creating template of binary namelists"
                 )
+                sys.exit(1)
 
         else:
 
             if self.run_id == "mesastar":
                 # again, some replacements are needed
-                for namelist in self._defaultStarNamelists:
-                    dictNamelist = MESANamelists.namelists_for_mesastar[namelist]
+                for namelist in mesa_namelists.star_namelists:
+                    dictNamelist = mesa_main_namelists.namelists_for_mesastar[namelist]
                     inlistNamelists[namelist] = replace_template_string_in_dict(
                         dictNamelist
                     )
 
             else:
-                sys.exit(
+                logger.critical(
                     f"{self.run_id}: unknown id for creating template star namelists"
                 )
+                sys.exit(1)
 
         self.namelists_for_init = inlistNamelists
 
@@ -374,9 +395,9 @@ class MESArun(object):
         projectNamelists = dict()
         if self.is_binary_evolution:
 
-            if self.run_id == "mesabinary":
+            if self.run_id == "mesabinary" or self.run_id == "mesabin2dco":
                 mesabinaryOptions = self.__get_non_default_values_for_namelists__(
-                    Options=self._MESAOptions, namelists=self._defaultBinaryNamelists
+                    Options=self._MESAOptions, namelists=mesa_namelists.binary_namelists
                 )
 
                 # for these, we need to set up inlist(1) & inlist(2) if not present already
@@ -390,24 +411,22 @@ class MESArun(object):
                 )
 
                 starOptions = self.__get_non_default_values_for_namelists__(
-                    Options=self._MESAOptions, namelists=self._defaultStarNamelists
+                    Options=self._MESAOptions, namelists=mesa_namelists.star_namelists
                 )
 
                 self.namelists_for_template.update(starOptions)
 
-            elif self.run_id == "mesabin2dco":
-                sys.exit("mesabin2dco template project not ready to be used")
-
             else:
-                sys.exit(
+                logger.critical(
                     f"{self.run_id}: unknown id for creating template of binary namelists"
                 )
+                sys.exit(1)
 
         else:
 
             if self.run_id == "mesastar":
                 mesastarOptions = self.__get_non_default_values_for_namelists__(
-                    Options=self._MESAOptions, namelists=self._defaultStarNamelists
+                    Options=self._MESAOptions, namelists=mesa_namelists.star_namelists
                 )
 
                 self.namelists_for_template = self.__pop_empty_namelists__(
@@ -415,9 +434,10 @@ class MESArun(object):
                 )
 
             else:
-                sys.exit(
+                logger.critical(
                     f"{self.run_id}: unknown id for creating template star namelists"
                 )
+                sys.exit(1)
 
     def set_run_namelists(self) -> None:
         """Create namelists with options that change for different MESA runs"""
@@ -446,25 +466,27 @@ class MESArun(object):
 
             if self.run_id == "mesabinary":
                 mesabinaryOptions = self.__get_non_default_values_for_namelists__(
-                    Options=self.variables, namelists=self._defaultBinaryNamelists
+                    Options=self.variables, namelists=mesa_namelists.binary_namelists
                 )
 
                 runOptions = mesabinaryOptions
 
             elif self.run_id == "mesabin2dco":
-                sys.exit("mesabin2dco template project not ready to be used")
+                logger.critical("mesabin2dco template project not ready to be used")
+                sys.exit(1)
 
             else:
-                sys.exit(
+                logger.critical(
                     f"{self.run_id}: unknown id for creating template of binary namelists"
                 )
+                sys.exit(1)
 
         else:
             runOptions = dict()
 
         # load options with MESAstar variable options
         mesastarOptions = self.__get_non_default_values_for_namelists__(
-            Options=self.variables, namelists=self._defaultStarNamelists
+            Options=self.variables, namelists=mesa_namelists.star_namelists
         )
 
         runOptions.update(mesastarOptions)
@@ -673,9 +695,10 @@ class MESArun(object):
                 inlist_fname = folder_name / "inlist_bin2dco"
 
             else:
-                sys.exit(
+                logger.critical(
                     f"{self.run_id}: unknown id for saving template of binary namelists"
                 )
+                sys.exit(1)
 
             # first, create `inlist` file
             inlist_file_string = ""
@@ -725,7 +748,7 @@ class MESArun(object):
                     data2["controls"]["log_directory"] = "LOGS2"
 
                 # patch to add call to inlist_project file from inside inlist_star1 and inlist_star2 files
-                for namelist in self._defaultStarNamelists:
+                for namelist in mesa_namelists.star_namelists:
                     if (
                         namelist in self.namelists_for_template
                         and len(self.namelists_for_template.get(namelist)) > 0
@@ -748,17 +771,17 @@ class MESArun(object):
                 inlist1_star_file_string = ""
                 inlist2_star_file_string = ""
                 for key in data:
-                    if key in self._defaultBinaryNamelists:
+                    if key in mesa_namelists.binary_namelists:
                         inlist_binary_file_string += dump_dict_to_namelist_string(
                             data=data[key], namelist=key, array_inline=False
                         )
                 for key in data1:
-                    if key in self._defaultStarNamelists:
+                    if key in mesa_namelists.star_namelists:
                         inlist1_star_file_string += dump_dict_to_namelist_string(
                             data=data1[key], namelist=key, array_inline=False
                         )
                 for key in data2:
-                    if key in self._defaultStarNamelists:
+                    if key in mesa_namelists.star_namelists:
                         inlist2_star_file_string += dump_dict_to_namelist_string(
                             data=data2[key], namelist=key, array_inline=False
                         )
@@ -788,12 +811,14 @@ class MESArun(object):
                     f.write(inlist_star_file_string)
 
             else:
-                sys.exit(
+                logger.critical(
                     f"{self.run_id}: unknown id for creating run of binary namelists"
                 )
+                sys.exit(1)
 
         else:
-            sys.exit(f"{loc_id} is not a valid option")
+            logger.critical(f"{loc_id} is not a valid option")
+            sys.exit(1)
 
     def copy_column_list_files(self, filenames: list = []) -> None:
         """Copy column list file with the columns that will be saved in a MESA run
