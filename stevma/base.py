@@ -188,6 +188,7 @@ class Manager(object):
             logger.critical(
                 "meshgrid object is not defined. need to call `set_meshgrid` before"
             )
+            sys.exit(1)
 
         # some useful dictionaries for creating MESArun objects
         runsDict = self.config.get("runs")
@@ -206,6 +207,7 @@ class Manager(object):
                 mesa_dir=mesaDict.get("mesa_dir"),
                 mesasdk_dir=mesaDict.get("mesasdk_root"),
                 mesa_caches_dir=mesaDict.get("mesa_caches_dir"),
+                mesabin2dco_dir=mesaDict.get("mesabin2dco_dir"),
                 **self.meshgrid[key],
             )
 

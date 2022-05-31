@@ -39,6 +39,7 @@ def start():
 def main():
     """Main driver for stellar evolution manager"""
 
+    logger.info("******************")
     logger.info("initialize manager")
 
     # catch CTRL-C signal
