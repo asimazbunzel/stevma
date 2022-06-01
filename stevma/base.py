@@ -9,8 +9,13 @@ import pprint
 
 from stevma.io.io import load_yaml
 from stevma.io.logger import logger
+from stevma.job import MESAJob, ShellJob
 from stevma.mesa import MESArun
-from stevma.meshgrid import check_for_valid_namelist_options, create_meshgrid_from_dict
+from stevma.meshgrid import (
+    check_for_valid_namelist_options,
+    create_meshgrid_from_dict,
+    split_grid,
+)
 
 
 class Manager(object):
@@ -59,6 +64,8 @@ class Manager(object):
 
         # load mesh of stellar evolution models
         self.meshgrid = None
+
+        self.create_template_job()
 
         self.set_meshgrid()
         self.create_MESAruns()
@@ -198,25 +205,32 @@ class Manager(object):
         # loop over meshgrid to create MESArun objects
         self.MESAruns = dict()
         for key in self.meshgrid.keys():
-            self.MESAruns[key] = MESArun(
-                identifier=int(key),
-                template_directory=templateDict.get("output_directory"),
-                run_root_directory=runsDict.get("output_directory"),
-                is_binary_evolution=templateDict.get("is_binary_evolution"),
-                run_id=runsDict.get("id"),
-                mesa_dir=mesaDict.get("mesa_dir"),
-                mesasdk_dir=mesaDict.get("mesasdk_root"),
-                mesa_caches_dir=mesaDict.get("mesa_caches_dir"),
-                mesabin2dco_dir=mesaDict.get("mesabin2dco_dir"),
-                **self.meshgrid[key],
+            self.MESAruns[key] = dict()
+            self.MESAruns[key].update(
+                {
+                    "MESArun": MESArun(
+                        identifier=int(key),
+                        template_directory=templateDict.get("output_directory"),
+                        run_root_directory=runsDict.get("output_directory"),
+                        is_binary_evolution=templateDict.get("is_binary_evolution"),
+                        run_id=runsDict.get("id"),
+                        mesa_dir=mesaDict.get("mesa_dir"),
+                        mesasdk_dir=mesaDict.get("mesasdk_root"),
+                        mesa_caches_dir=mesaDict.get("mesa_caches_dir"),
+                        mesabin2dco_dir=mesaDict.get("mesabin2dco_dir"),
+                        **self.meshgrid[key],
+                    )
+                }
             )
 
             # load options for MESA simulations
-            self.MESAruns[key].load_options(templateDict.get("options_filename"))
+            self.MESAruns[key]["MESArun"].load_options(
+                templateDict.get("options_filename")
+            )
 
             # get dictionaries for template & run namelists
-            self.MESAruns[key].set_template_namelists()
-            self.MESAruns[key].set_run_namelists()
+            self.MESAruns[key]["MESArun"].set_template_namelists()
+            self.MESAruns[key]["MESArun"].set_run_namelists()
 
     def set_MESAruns_structure(self):
         """Method that takes care of creating the template & run folders for the meshgrid of
@@ -231,20 +245,58 @@ class Manager(object):
         # create template stucture of MESAruns just once
         keys = list(self.meshgrid.keys())
         key0 = keys[0]
-        self.MESAruns[key0].create_template_structure(
+        self.MESAruns[key0]["MESArun"].create_template_structure(
             copy_default_workdir=True, replace=templateDict.get("overwrite")
         )
-        self.MESAruns[key0].save_namelists_to_file(name_id="template")
+        self.MESAruns[key0]["MESArun"].save_namelists_to_file(name_id="template")
 
         # compile it
-        self.MESAruns[key0].compile_template()
+        self.MESAruns[key0]["MESArun"].compile_template()
 
         # create and store namelists into each run folder
         for key in self.meshgrid.keys():
-            self.MESAruns[key].create_run_structure()
-            self.MESAruns[key].save_namelists_to_file(name_id="run")
+            self.MESAruns[key]["MESArun"].create_run_structure()
+            self.MESAruns[key]["MESArun"].save_namelists_to_file(name_id="run")
 
     def dump_MESAruns_to_database(self) -> None:
         """Save information of MESAruns into a database"""
 
         return None
+
+    def split_MESAruns(self) -> None:
+        """Split the meshgrid of MESAruns into smaller ones by adding a new key to the dictionary
+        with the name `job_id`
+        """
+
+        # dictionary with manager settings
+        managerDict = self.config.get("manager")
+
+        # split grid
+        self.MESAruns = split_grid(
+            number_of_grids=managerDict.get("number_of_jobs"), Grid=self.MESAruns
+        )
+
+    def create_template_job(self):
+        """Create the shell script to be used to run the stellar evolution simulations"""
+
+        mesaDict = self.config.get("mesa")
+        templateDict = self.config.get("template")
+        runsDict = self.config.get("runs")
+
+        mesaJob = MESAJob(
+            mesa_dir=mesaDict.get("mesa_dir"),
+            mesasdk_dir=mesaDict.get("mesasdk_root"),
+            mesa_caches_dir=mesaDict.get("mesa_caches_dir"),
+        )
+
+        command = mesaJob.set_mesainit_string()
+        command += mesaJob.set_mesa_env_variables_string(
+            template_directory=templateDict.get("output_directory"),
+            runs_directory=runsDict.get("output_directory"),
+        )
+        command += mesaJob.set_main_loop_string()
+
+        job = ShellJob(name="test", command=command)
+        job.write_job_to_file("test.sh")
+
+        sys.exit()
