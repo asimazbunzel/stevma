@@ -656,9 +656,13 @@ class MESArun(object):
         if len(extra_template_files) > 0:
             for file in extra_template_files:
                 output_folder = self.template_directory
+
+                # split by "/" and get the name from the last item
+                filename = str(file).split("/")[-1]
+
                 file = Path(file)
                 if file.is_file():
-                    output_file = output_folder / file
+                    output_file = output_folder / filename
                     copyfile(file, output_file)
                 else:
                     print(f"could not copy file {file}. file not found")
@@ -780,6 +784,13 @@ class MESArun(object):
                     data1["controls"]["log_directory"] = "LOGS1"
                 if "log_directory" not in data2["controls"]:
                     data2["controls"]["log_directory"] = "LOGS2"
+
+                # another patch, MESA needs pgstar namelist in its inlist1 and inlist2, else
+                # it breaks
+                if "pgstar" not in data1:
+                    data1["pgstar"] = dict()
+                if "pgstar" not in data2:
+                    data2["pgstar"] = dict()
 
                 # patch to add call to inlist_project file from inside inlist_star1 and inlist_star2 files
                 for namelist in mesa_namelists.star_namelists:
