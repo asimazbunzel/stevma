@@ -111,8 +111,6 @@ class MESAJob(object):
         else:
             binary_name = "star"
 
-        print(self.is_binary_evolution, binary_name)
-
         string = "\n"
         string += "mesainit\n\n"
         string += "filename=$1\n"
