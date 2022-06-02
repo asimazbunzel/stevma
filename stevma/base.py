@@ -65,12 +65,6 @@ class Manager(object):
         # load mesh of stellar evolution models
         self.meshgrid = None
 
-        self.create_template_job()
-
-        self.set_meshgrid()
-        self.create_MESAruns()
-        self.set_MESAruns_structure()
-
     def init_args(self):
         """Initialize parser of arguments from the command line"""
 
@@ -237,16 +231,26 @@ class Manager(object):
         stellar evolution models
         """
 
+        logger.info("setting template and run structure for MESA runs")
+
         # some useful dictionaries for creating MESArun objects
         runsDict = self.config.get("runs")
         templateDict = self.config.get("template")
         mesaDict = self.config.get("mesa")
 
+        # if the id of the runs is `mesabin2dco`, add inlists from src code
+        extra_template_files = []
+        if runsDict.get("id") == "mesabin2dco":
+            extra_template_files.append(f"{mesaDict.get('mesabin2dco_dir')}/inlist_ce")
+            extra_template_files.append(f"{mesaDict.get('mesabin2dco_dir')}/inlist_cc")
+
         # create template stucture of MESAruns just once
         keys = list(self.meshgrid.keys())
         key0 = keys[0]
         self.MESAruns[key0]["MESArun"].create_template_structure(
-            copy_default_workdir=True, replace=templateDict.get("overwrite")
+            copy_default_workdir=True,
+            replace=templateDict.get("overwrite"),
+            extra_template_files=extra_template_files,
         )
         self.MESAruns[key0]["MESArun"].save_namelists_to_file(name_id="template")
 
@@ -261,12 +265,16 @@ class Manager(object):
     def dump_MESAruns_to_database(self) -> None:
         """Save information of MESAruns into a database"""
 
+        logger.info("dumping MESAruns into database")
+
         return None
 
     def split_MESAruns(self) -> None:
         """Split the meshgrid of MESAruns into smaller ones by adding a new key to the dictionary
         with the name `job_id`
         """
+
+        logger.info("splitting MESAruns dictionary into smaller meshgrids")
 
         # dictionary with manager settings
         managerDict = self.config.get("manager")
@@ -279,16 +287,25 @@ class Manager(object):
     def create_template_job(self):
         """Create the shell script to be used to run the stellar evolution simulations"""
 
+        logger.info(
+            "creating template job that will be used to launch different runs of the meshgrid"
+        )
+
+        # some useful dictionaries for creating template job script
         mesaDict = self.config.get("mesa")
         templateDict = self.config.get("template")
         runsDict = self.config.get("runs")
+        managerDict = self.config.get("manager")
 
+        # mesaJob object contains all the stuff needed to make a MESA run
         mesaJob = MESAJob(
             mesa_dir=mesaDict.get("mesa_dir"),
             mesasdk_dir=mesaDict.get("mesasdk_root"),
             mesa_caches_dir=mesaDict.get("mesa_caches_dir"),
+            is_binary_evolution=templateDict.get("is_binary_evolution"),
         )
 
+        # create command which will go into a shell script
         command = mesaJob.set_mesainit_string()
         command += mesaJob.set_mesa_env_variables_string(
             template_directory=templateDict.get("output_directory"),
@@ -296,7 +313,30 @@ class Manager(object):
         )
         command += mesaJob.set_main_loop_string()
 
-        job = ShellJob(name="test", command=command)
-        job.write_job_to_file("test.sh")
+        # create manager job and write it to a file
+        if managerDict.get("manager") == "shell":
+            # get name of job file
+            fname = ""
+            if managerDict.get("job_file_prefix") != "":
+                fname += f"{managerDict.get('job_file_prefix')}"
+
+            if managerDict.get("job_filename") != "":
+                fname += f"{managerDict.get('job_filename')}"
+
+            # if fname is empty, exit with an error
+            if fname == "":
+                logger.critical(
+                    "both `job_file_prefix` and `job_filename` cannot be empty strings. cannot create job filename"
+                )
+                sys.exit(1)
+
+            job = ShellJob(name="ShellJob", command=command)
+            job.write_job_to_file(fname=fname)
+
+        else:
+            logger.critical(
+                "using a different manager than `shell` is not ready to be used"
+            )
+            sys.exit(1)
 
         sys.exit()

@@ -35,6 +35,25 @@ def start():
         print(f"LOG FILENAME is: `{LOG_FILENAME}`")
         sys.exit(0)
 
+    # create meshgrid
+    core.set_meshgrid()
+
+    # then, create the dictionary of MESAruns for the meshgrid
+    core.create_MESAruns()
+
+    # once the MESAruns are set, create template & runs folder structure
+    core.set_MESAruns_structure()
+
+    # next, split the dictionary of MESAruns to be more efficient once they are computed
+    core.split_MESAruns()
+
+    # then, store everything into a database
+    core.dump_MESAruns_to_database()
+
+    # last, create template job that will be used to launch each different set of smaller meshgrids
+    # THIS IS NOT READY TO BE USED
+    core.create_template_job()
+
 
 def main():
     """Main driver for stellar evolution manager"""
