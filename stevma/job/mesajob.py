@@ -25,6 +25,7 @@ class MESAJob(object):
         mesa_dir: Union[str, Path] = "",
         mesasdk_dir: Union[str, Path] = "",
         mesa_caches_dir: Union[str, Path] = "",
+        is_binary_evolution: bool = False,
     ) -> None:
 
         # check if variables are OK
@@ -55,6 +56,8 @@ class MESAJob(object):
             self.mesa_caches_dir = Path(mesa_caches_dir)
         else:
             self.mesa_caches_dir = mesa_caches_dir
+
+        self.is_binary_evolution = is_binary_evolution
 
     def set_mesainit_string(self) -> str:
         """Create string to initialize MESA inside a shell script"""
@@ -102,10 +105,24 @@ class MESAJob(object):
     def set_main_loop_string(self):
         """Create string with main loop of stellar evolution runs"""
 
-        string = "\nfilename=$1"
-        string += "\ncd $MESA_RUNS_DIR\n"
+        # get the name of the binary of MESA depending on the type of run
+        if self.is_binary_evolution:
+            binary_name = "binary"
+        else:
+            binary_name = "star"
+
+        print(self.is_binary_evolution, binary_name)
+
+        string = "\n"
+        string += "mesainit\n\n"
+        string += "filename=$1\n"
+        string += "cd $MESA_RUNS_DIR\n"
         string += "while read line; do\n"
-        string += "   echo $line\n"
+        string += "   dir=$line\n"
+        string += "   echo going to evolve the run inside: $dir\n"
+        string += "   cd $dir\n"
+        string += f"   $MESA_TEMPLATE_DIR/{binary_name} | tee log\n"
+        string += "   cd $MESA_RUNS_DIR\n"
         string += "done < $filename"
 
         return string
