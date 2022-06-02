@@ -895,9 +895,16 @@ class MESArun(object):
             # if this is a binary evolution copy the binary history columns file
             if self.is_binary_evolution:
                 binary_history_infile = (
-                    self.mesa_dir / "star/defaults" / _binary_history_filename
+                    self.mesa_dir / "binary/defaults" / _binary_history_filename
                 )
                 binary_history_outfile = (
                     self.template_directory / _binary_history_filename
                 )
                 copyfile(binary_history_infile, binary_history_outfile)
+
+        else:
+            for file in filenames:
+                _fname = str(file).split("/")[-1]
+                outfile = self.template_directory / _fname
+                infile = Path(file)
+                copyfile(infile, outfile)

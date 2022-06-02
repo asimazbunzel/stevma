@@ -254,6 +254,17 @@ class Manager(object):
         )
         self.MESAruns[key0]["MESArun"].save_namelists_to_file(name_id="template")
 
+        # also, save *.list files with the information on the columns that will be saved by MESA
+        list_filenames = []
+        for name in [
+            mesaDict.get("history_columns_filename"),
+            mesaDict.get("profile_columns_filename"),
+            mesaDict.get("binary_history_columns_filename"),
+        ]:
+            if name is not None and name != "":
+                list_filenames.append(mesaDict.get(name))
+        self.MESAruns[key0]["MESArun"].copy_column_list_files(filenames=list_filenames)
+
         # compile it
         self.MESAruns[key0]["MESArun"].compile_template()
 
