@@ -304,6 +304,24 @@ class MESArun(object):
                                 arr = value.split("/")
                                 value = f"{self.template_directory}/{arr[-1]}"
 
+                        # special treatment for arrays and how they are used in fortran
+                        if "(" in key and ")" in key:
+                            key_id_arr = key.split("(")[0]
+
+                            # in case there are more than one element in the dictionary as
+                            # a non default value, increase the array element index
+                            if key_id_arr not in nonDefaultOptions.keys():
+                                repetition_number = 1
+                            else:
+                                repetition_number = 0
+                                for key in nonDefaultOptions.keys():
+                                    if key_id_arr in key:
+                                        repetition_number += 1
+                                repetition_number += 1
+
+                            # modify the key name
+                            key = f"{key_id_arr}({repetition_number})"
+
                         nonDefaultOptions[namelist][key] = value
 
         return nonDefaultOptions
