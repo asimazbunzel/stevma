@@ -262,7 +262,7 @@ class Manager(object):
             mesaDict.get("binary_history_columns_filename"),
         ]:
             if name is not None and name != "":
-                list_filenames.append(mesaDict.get(name))
+                list_filenames.append(name)
         self.MESAruns[key0]["MESArun"].copy_column_list_files(filenames=list_filenames)
 
         # compile it
@@ -350,4 +350,37 @@ class Manager(object):
             )
             sys.exit(1)
 
-        sys.exit()
+    def create_list_of_MESAruns_for_job(self):
+        """Create a txt file in which every row is a different run of the meshgrid depending on the
+        `job_id`
+        """
+
+        logger.info(
+            "creating txt files with the list of folders to be computed by the stellar evolutionary code depending on the job_id value"
+        )
+
+        # useful dicts
+        managerDict = self.config.get("manager")
+        runsDict = self.config.get("runs")
+
+        number_of_jobs = managerDict.get("number_of_jobs")
+        for k in range(number_of_jobs):
+            fname = f"{runsDict.get('output_directory')}/job_{k}.folders"
+            logger.debug(f"going to write folders for job_id {k} in file {fname}")
+
+            folder_list = []
+            for id_number in self.MESAruns:
+                # each element in the dict has a MESArun object and a job_id
+                mesaRun = self.MESAruns[id_number]["MESArun"]
+                jobId = self.MESAruns[id_number]["job_id"]
+
+                # just append with the proper job_id value
+                if jobId == k:
+                    folder_list.append(mesaRun.run_name)
+
+            logger.debug(f"folder list for job_id {k}: {folder_list}")
+            logger.debug(f"number of folders: {len(folder_list)}")
+
+            with open(fname, "w") as f:
+                for folder in folder_list:
+                    f.write(f"{folder}\n")

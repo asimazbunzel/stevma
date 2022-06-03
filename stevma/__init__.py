@@ -54,6 +54,9 @@ def start():
     # THIS IS NOT READY TO BE USED
     core.create_template_job()
 
+    core.split_MESAruns()
+    core.create_list_of_MESAruns_for_job()
+
 
 def main():
     """Main driver for stellar evolution manager"""
