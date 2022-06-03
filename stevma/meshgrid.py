@@ -73,6 +73,7 @@ def create_meshgrid_from_dict(d: dict = {}, conditions: list = []) -> dict:
 
     # get number of possible gridpoints (might be reduced later on)
     estimated_number_gridpoints = get_number_of_gridpoints(d)
+    logger.debug(f"estimated number of gridpoints: {estimated_number_gridpoints}")
 
     # generate a list of identifiers based on the number of gridpoints. it starts with 0 and goes
     # up to (estimated_number_gridpoints - 1)
@@ -101,19 +102,16 @@ def create_meshgrid_from_dict(d: dict = {}, conditions: list = []) -> dict:
             tmpDict[option] = values
 
     # once the dictionary is set, use numpy to create the meshgrid
-    grid = np.meshgrid(*list(tmpDict.values()))
+    tmpGrid = np.asarray(np.meshgrid(*list(tmpDict.values())))
+    grid = np.column_stack([element.flatten() for element in tmpGrid])
+    logger.debug(f"number of elements in the grid: {len(grid)}")
 
-    # each element in the grid is then separated into different dictionaries, one for each run
-    for k in range(len(grid[0][0])):
-        for j in range(len(grid)):
-            parsed_value = grid[j][0][k]
-            try:
-                meshgrid.get(f"{k}").update({option_names[j]: int(parsed_value)})
-            except ValueError:
-                try:
-                    meshgrid.get(f"{k}").update({option_names[j]: float(parsed_value)})
-                except ValueError:
-                    meshgrid.get(f"{k}").update({option_names[j]: parsed_value})
+    # each element in the grid is then separated into different dictionaries, one for each case
+    for k in range(len(grid)):
+        row = grid[k]
+        for j, name in enumerate(option_names):
+            meshgrid.get(f"{k}").update({option_names[j]: row[j]})
+        logger.debug(f"meshgrid element ({k}): {meshgrid.get(f'{k}')}")
 
     # now we check some important stuff for binary evolution such as to avoid repeting simulations
     keys_to_pop = []
