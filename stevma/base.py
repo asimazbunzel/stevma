@@ -3,6 +3,7 @@
 import argparse
 import os
 from pathlib import Path
+import subprocess
 import sys
 
 import pprint
@@ -346,7 +347,7 @@ class Manager(object):
 
         else:
             logger.critical(
-                "using a different manager than `shell` is not ready to be used"
+                "using a different manager than `shell` is not ready to be used to create a template job"
             )
             sys.exit(1)
 
@@ -384,3 +385,49 @@ class Manager(object):
             with open(fname, "w") as f:
                 for folder in folder_list:
                     f.write(f"{folder}\n")
+
+    def submit_specific_job(self, job_id: int = 0) -> None:
+        """Submit a job to a queue"""
+
+        # check for a valid job_id number
+        if job_id < 0:
+            logger.critical("job_id (int) number cannot be lower than 0")
+            sys.exit(1)
+
+        # useful dicts
+        managerDict = self.config.get("manager")
+        runsDict = self.config.get("runs")
+
+        # get number of jobs
+        number_of_jobs = managerDict.get("number_of_jobs")
+
+        # check that the job_id is lower than the number of jobs
+        if job_id > number_of_jobs:
+            logger.critical(
+                "job_id cannot be higher than the number of jobs (number_of_jobs)"
+            )
+            sys.exit(1)
+
+        # name of the file with the runs of the specific job_id
+        fname = f"{runsDict.get('output_directory')}/job_{job_id}.folders"
+
+        # submit depending on the manager
+        if managerDict.get("manager") == "shell":
+            try:
+                p = subprocess.Popen(
+                    f"sh {fname}",
+                    stdin=subprocess.PIPE,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                )
+                stdout, stderr = p.communicate()
+                print(stdout[:-1])
+
+            except Exception as e:
+                print(e)
+
+        else:
+            logger.critical(
+                "using a different manager than `shell` is not ready to be used to submit a job"
+            )
+            sys.exit(1)
