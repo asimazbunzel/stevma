@@ -51,7 +51,6 @@ def start():
     core.dump_MESAruns_to_database()
 
     # last, create template job that will be used to launch each different set of smaller meshgrids
-    # THIS IS NOT READY TO BE USED
     core.create_template_job()
 
     core.split_MESAruns()
