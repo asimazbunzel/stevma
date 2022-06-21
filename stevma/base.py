@@ -27,7 +27,7 @@ class Manager(object):
     ----------
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         # command line arguments
         self.args = self.parse_args()
 
@@ -66,7 +66,7 @@ class Manager(object):
         # load mesh of stellar evolution models
         self.meshgrid = None
 
-    def init_args(self):
+    def init_args(self) -> argparse.ArgumentParser:
         """Initialize parser of arguments from the command line"""
 
         parser = argparse.ArgumentParser(
@@ -118,7 +118,7 @@ class Manager(object):
 
         return parser
 
-    def parse_args(self):
+    def parse_args(self) -> argparse.Namespace:
         """Parse command line arguments"""
 
         args = self.init_args().parse_args()
@@ -227,7 +227,7 @@ class Manager(object):
             self.MESAruns[key]["MESArun"].set_template_namelists()
             self.MESAruns[key]["MESArun"].set_run_namelists()
 
-    def set_MESAruns_structure(self):
+    def set_MESAruns_structure(self) -> None:
         """Method that takes care of creating the template & run folders for the meshgrid of
         stellar evolution models
         """
@@ -296,7 +296,7 @@ class Manager(object):
             number_of_grids=managerDict.get("number_of_jobs"), Grid=self.MESAruns
         )
 
-    def create_template_job(self):
+    def create_template_job(self) -> None:
         """Create the shell script to be used to run the stellar evolution simulations"""
 
         logger.info(
@@ -351,7 +351,7 @@ class Manager(object):
             )
             sys.exit(1)
 
-    def create_list_of_MESAruns_for_job(self):
+    def create_list_of_MESAruns_for_job(self) -> None:
         """Create a txt file in which every row is a different run of the meshgrid depending on the
         `job_id`
         """
