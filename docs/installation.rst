@@ -23,7 +23,7 @@ Installing STEVMA
 -----------------
 
 Once the repository is cloned in a local directory, `cd` into this new directory and
-run the following code::
+run the following code
 
 .. code-block::
 

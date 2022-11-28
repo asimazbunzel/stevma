@@ -7,20 +7,20 @@ To use the STEVMA code, an executable called `run-manager` is created after inst
 It is accompanied by some command-line options as detailed here:
 
 - **-h, --help**           - show this help message and exit
-- **-d, --debug**          - enable debug mode (default: False)
-- **-C CONFIG_FNAME, --config-file CONFIG_FNAME** -
-                             name of configuration file (default: None)
-- **--show-log-name**      - display log filename and exit (default: False)
-- **--show-database-name** - display database filename and exit (default: False)
-- **--list-grid**          - display grid list and exit (default: False)
-- **-v, --visualize**      - enable visualization of grid using matplotlib.
-                             EXPERIMENTAL: NOT READY TO USE (default: False)
+- **-d, --debug**          - enable debug mode (default: False).
+- **-C CONFIG_FNAME, --config-file CONFIG_FNAME** - name of configuration file (default: None).
+- **--show-log-name**      - display log filename and exit (default: False).
+- **--show-database-name** - display database filename and exit (default: False).
+- **--list-grid**          - display grid list and exit (default: False).
+- **-v, --visualize**      - enable visualization of grid using matplotlib (default: False). (EXPERIMENTAL: NOT READY TO USE)
 
 Configuration file
 ------------------
 
 The option `-C` (or `--config-file`) contains all the options that are needed to produce
-a grid of MESA simulations, listed below:
+a grid of MESA simulations.
+
+An example file with all the available options is listed below.
 
 .. code-block:: yaml
 
