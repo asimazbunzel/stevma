@@ -1,0 +1,71 @@
+# Config options for stellar evolution manager
+
+# Database filename
+database:
+  filename: "hmxb.db"
+
+# Folder where MESA runs will be stored
+runs:
+  id: "mesabinary"
+  meshgrid_filename: "example/grid.yaml"
+  output_directory: "example/runs"
+  overwrite: false
+  do_kicks: false
+  filename_kick_script:
+
+# Folder where MESAbin2dco src code is located to replicate, & where it
+# will be copied
+template:
+  is_binary_evolution: true
+  options_filename: "example/mesa_options.yaml"
+  output_directory: "example/templates"
+  overwrite: true
+
+  extras:
+    extra_dir_in_src:
+    extra_files_in_src:
+    extra_template_files:
+    extra_makefile:
+
+# MESA options
+mesa:
+  mesa_dir: "/home/asimazbunzel/Developments/mesa-r15140"
+  mesasdk_root: "/home/asimazbunzel/Developments/mesasdk-20.12.1"
+  mesa_caches_dir: "/home/asimazbunzel/.cache/mesa-r15140"
+
+  mesabin2dco_dir: "/home/asimazbunzel/Developments/mesabin2dco"
+
+  # files with the name of the columns to be saved by MESA
+  history_columns_filename:
+  profile_columns_filename:
+  binary_history_columns_filename:
+
+# Options for the Slurm manager
+manager:
+  # identifier of the manager. options are: "shell", "slurm"
+  manager: "slurm"
+
+  # prefix to prepend to job filename(s)
+  job_file_prefix: "example/runs/hmxb_"
+  job_filename: "run.sh"
+
+  # hpc options are only used if manager is either "pbs" or "slurm"
+  hpc:
+    name: "example_slurm"
+    email: "asimazbunzel@iar.unlp.edu.ar"
+    out_fname:
+    err_fname:
+    queue: "bigmem"
+    msg: "all"
+    nodes: 1
+    ppn: 12
+    mem: 8
+    walltime: "168:00:00"
+
+  # options to use for the entire mesh of models:
+  # number_of_jobs: number of jobs to divide the mesh
+  # number_of_cores: how many cpu cores will be using for each simulation
+  # number_of_parallel_jobs: how many jobs will be sent to compute in parallel
+  number_of_jobs: 50
+  number_of_cores: 12
+  number_of_parallel_jobs: 10
