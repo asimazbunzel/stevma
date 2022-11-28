@@ -77,7 +77,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'mesh-manager = stevma.cli:main',
+            'run-manager = stevma.cli:main',
         ]
     },
 )
