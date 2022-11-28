@@ -66,6 +66,6 @@ manager:
   # number_of_jobs: number of jobs to divide the mesh
   # number_of_cores: how many cpu cores will be using for each simulation
   # number_of_parallel_jobs: how many jobs will be sent to compute in parallel
-  number_of_jobs: 50
+  number_of_jobs: 2
   number_of_cores: 12
   number_of_parallel_jobs: 10
