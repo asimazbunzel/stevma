@@ -5,6 +5,9 @@ Contents
 STEVMA (STellar EVolution MAnager) is a code to manage several simulations of the
 `MESA <https://docs.mesastar.org/en/release-r22.11.1/>`__ stellar-evolution code
 
+It is and open source project hosted in Github:
+`STEVMA <https://stevma.readthedocs.io/en/latest/index.html>`__
+
 .. toctree::
    :maxdepth: 1
 
