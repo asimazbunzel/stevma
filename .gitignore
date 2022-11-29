@@ -1,3 +1,6 @@
+example/runs
+example/templates
+
 *.py[cod]
 __pycache__
 
