@@ -1,12 +1,15 @@
 """Main driver for stellar evolution manager"""
 
 import argparse
+from collections import OrderedDict
 import os
 import pprint
 import subprocess
 import sys
 from pathlib import Path
+import pprint
 
+from .io.database import insert_into_database
 from .io.io import load_yaml
 from .io.logger import logger
 from .job import MESAJob, ShellJob, SlurmJob
@@ -315,6 +318,27 @@ class Manager(object):
         """Save information of MESAruns into a database"""
 
         logger.info("dumping MESAruns into database")
+
+        database_filename = self.config["database"].get("filename")
+        table_name = self.config["database"].get("tablename")
+
+        # remove file if it exists
+        try:
+            os.remove(database_filename)
+        except Exception:
+            logger.info(f"cannot remove database file: {database_filename}")
+
+        for key in self.MESAruns.keys():
+            table_dict = {
+                "id": int(key),
+                "run_name": str(self.MESAruns[key]["MESArun"].run_name),
+                "template_directory": str(self.MESAruns[key]["MESArun"].template_directory),
+                "runs_directory": str(self.MESAruns[key]["MESArun"].run_root_directory),
+                "job_id": int(self.MESAruns[key]["job_id"]),
+                "status": "not computed",
+            }
+            logger.debug(f"inserting database element ({key}): {table_dict}")
+            insert_into_database(database_filename=database_filename, table_name=table_name, table_dict=table_dict)
 
         return None
 

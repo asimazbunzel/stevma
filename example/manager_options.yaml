@@ -3,6 +3,7 @@
 # Database filename
 database:
   filename: "hmxb.db"
+  tablename: "MESAruns"
 
 # Folder where MESA runs will be stored
 runs:
