@@ -212,6 +212,7 @@ class Manager(object):
         # loop over meshgrid to create MESArun objects
         self.MESAruns = dict()
         for key in self.meshgrid.keys():
+            logger.info(f"updating MESAruns with id: {key}")
             self.MESAruns[key] = dict()
             self.MESAruns[key].update(
                 {
@@ -403,7 +404,7 @@ class Manager(object):
         # create the script depending on the type of manager to use for the simulations
         if managerDict.get("manager") == "shell":
 
-            job = ShellJob(name=name, command=command)
+            job = ShellJob(name=fname, command=command)
             job.write_job_to_file(fname=fname)
 
         elif managerDict.get("manager") == "slurm":
