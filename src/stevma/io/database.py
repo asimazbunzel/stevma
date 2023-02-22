@@ -59,7 +59,5 @@ def insert_into_database(database_filename: str = "", table_name: str = "", tabl
     cmd = f"{cmd} {cmd_column_names[:-2]}) VALUES {cmd_column_values[:-2]})"
     c.execute(cmd)
 
-    print(cmd)
-
     conn.commit()
     conn.close()
