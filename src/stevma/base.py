@@ -322,12 +322,14 @@ class Manager(object):
 
         database_filename = self.config["database"].get("filename")
         table_name = self.config["database"].get("tablename")
+        overwrite = self.config["database"].get("overwrite")
 
         # remove file if it exists
-        try:
-            os.remove(database_filename)
-        except Exception:
-            logger.info(f"cannot remove database file: {database_filename}")
+        if overwrite:
+            try:
+                os.remove(database_filename)
+            except Exception as e:
+                logger.info(f"cannot remove database file: {database_filename}. Exception: {e}")
 
         for key in self.MESAruns.keys():
             table_dict = {
