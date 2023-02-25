@@ -65,6 +65,7 @@ def start():
     # last, create template job that will be used to launch each different set of smaller meshgrids
     core.create_template_job()
 
+    # to compute models in parallel, split runs into many different jobs
     core.split_MESAruns()
     core.create_list_of_MESAruns_for_job()
 
@@ -72,8 +73,10 @@ def start():
 def main():
     """Main driver for stellar evolution manager"""
 
-    logger.info("******************************************************")
-    logger.info("initialize manager")
+    logger.info("********************************************************")
+    logger.info("               Stellar Evolution Manager                ")
+    logger.info("********************************************************")
+    logger.info("initialize manager for grid of stellar evolution models")
 
     # catch CTRL-C signal
     signal.signal(signal.SIGINT, __signal_handler)

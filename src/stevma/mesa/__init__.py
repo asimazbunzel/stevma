@@ -223,6 +223,8 @@ class MESArun(object):
             Filename with MESA options
         """
 
+        logger.debug("loading options")
+
         # always use pathlib
         if isinstance(fname, str):
             fname = Path(fname)
@@ -377,6 +379,8 @@ class MESArun(object):
 
             return d
 
+        logger.debug("setting template namelists")
+
         # first, structure the template for the most important namelist which lives
         # in the `inlist` file
         inlistNamelists = dict()
@@ -499,6 +503,8 @@ class MESArun(object):
 
             return d
 
+        logger.debug("setting run namelists")
+
         if self.is_binary_evolution:
 
             if self.run_id == "mesabinary" or self.run_id == "mesabin2dco":
@@ -560,6 +566,8 @@ class MESArun(object):
         extra_template_files : `list`
             List of files that should be copied in the template folder
         """
+
+        logger.debug("creating template structure")
 
         # to replace, first we remove everything from the template folder
         if replace:
@@ -692,11 +700,15 @@ class MESArun(object):
     def create_run_structure(self) -> None:
         """Create and copy files to run root"""
 
+        logger.debug("creating run structure")
+
         if not self.run_directory.is_dir():
             self.run_directory.mkdir(parents=True)
 
     def compile_template(self) -> None:
         """Compile source code of MESA run"""
+
+        logger.debug("compiling template")
 
         if not self.mesa_dir.is_dir():
             raise ValueError(f"{self.mesa_dir} is not a valid MESA installation")
@@ -739,6 +751,8 @@ class MESArun(object):
         name_id : `str`
             Identifier to know where to store the inlist. Options are: `template` or `run`
         """
+
+        logger.debug("saving namelist(s) to file(s)")
 
         # check for the correct option
         if name_id == "template":
