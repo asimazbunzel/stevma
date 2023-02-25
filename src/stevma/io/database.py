@@ -37,8 +37,16 @@ def insert_into_database(database_filename: str = "", table_name: str = "", tabl
     # first create table if it does not exist
     cmd = f"CREATE TABLE IF NOT EXISTS {table_name} ("
     for key, value in table_dict.items():
-        if value is None:
-            cmd += f"{key} REAL, "
+
+        # id key must be a primary key
+        if key == "id":
+            cmd += f"{key} INTEGER PRIMARY KEY, "
+
+        # run_name must be unique. duplicates are not allowed
+        elif key == "run_name":
+            cmd += f"{key} {dtype_map[type(value)]} UNIQUE, "
+
+        # the rest can be resolved by its type
         else:
             cmd += f"{key} {dtype_map[type(value)]}, "
     cmd = cmd[:-2]
