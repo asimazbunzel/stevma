@@ -1,0 +1,70 @@
+# This file exists so you can easily regenerate your project.
+#
+# `cookiepatcher` is a convenient shim around `cookiecutter`
+# for regenerating projects (it will generate a .cookiecutterrc
+# automatically for any template). To use it:
+#
+#    pip install cookiepatcher
+#    cookiepatcher gh:ionelmc/cookiecutter-pylibrary stevma
+#
+# See:
+#    https://pypi.org/project/cookiepatcher
+#
+# Alternatively, you can run:
+#
+#    cookiecutter --overwrite-if-exists --config-file=stevma/.cookiecutterrc gh:ionelmc/cookiecutter-pylibrary
+
+default_context:
+    allow_tests_inside_package: 'no'
+    appveyor:                  'no'
+    c_extension_function:      'longest'
+    c_extension_module:        '_stevma'
+    c_extension_optional:      'no'
+    c_extension_support:       'no'
+    c_extension_test_pypi:     'no'
+    c_extension_test_pypi_username: 'asimazbunzel'
+    codacy:                    'no'
+    codacy_projectid:          '[Get ID from https://app.codacy.com/gh/asimazbunzel/stevma/settings]'
+    codeclimate:               'no'
+    codecov:                   'yes'
+    command_line_interface:    'argparse'
+    command_line_interface_bin_name: 'mesh-manager'
+    coveralls:                 'no'
+    distribution_name:         'stevma'
+    email:                     'asimazbunzel@iar.unlp.edu.ar'
+    full_name:                 'Adolfo Simaz Bunzel'
+    github_actions:            'yes'
+    github_actions_osx:        'yes'
+    github_actions_windows:    'yes'
+    license:                   'GNU Lesser General Public License v2.1 (LGPLv2)'
+    linter:                    'flake8'
+    package_name:              'stevma'
+    pre_commit:                'yes'
+    pre_commit_formatter:      'black'
+    project_name:              'stevma'
+    project_short_description: 'Stellar evolution manager'
+    pypi_badge:                'no'
+    pypi_disable_upload:       'no'
+    release_date:              'today'
+    repo_hosting:              'github.com'
+    repo_hosting_domain:       'github.com'
+    repo_main_branch:          'main'
+    repo_name:                 'stevma'
+    repo_username:             'asimazbunzel'
+    requiresio:                'yes'
+    scrutinizer:               'no'
+    setup_py_uses_pytest_runner: 'no'
+    setup_py_uses_setuptools_scm: 'no'
+    sphinx_docs:               'yes'
+    sphinx_docs_hosting:       'https://stevma.readthedocs.io/'
+    sphinx_doctest:            'no'
+    sphinx_theme:              'sphinx-rtd-theme'
+    test_matrix_configurator:  'no'
+    test_matrix_separate_coverage: 'no'
+    travis:                    'no'
+    travis_osx:                'no'
+    version:                   '0.0.0'
+    version_manager:           'bump2version'
+    website:                   'https://asimazbunzel.github.io'
+    year_from:                 '2022'
+    year_to:                   '2022'
