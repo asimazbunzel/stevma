@@ -5,7 +5,7 @@
 # Database options
 database:
   # *name: file & table names (sqlite-type database)
-  filename: "hmxb.db"
+  filename: "example/example-grid.db"
   tablename: "MESAruns"
 
   # overwrite: flag to remove `filename` and re-write it
@@ -76,7 +76,7 @@ manager:
   manager: "shell"
 
   # job_*: prefix to prepend to job filename(s)
-  job_file_prefix: "example/runs/hmxb_"
+  job_file_prefix: "example/runs/example_"
   job_filename: "run.sh"
 
   # hpc: these options are only used if manager is either "pbs" or "slurm"
