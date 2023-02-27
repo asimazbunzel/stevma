@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 import pprint
 
-from .io.database import insert_into_database
+from .io.database import create_database, insert_into_database
 from .io.io import load_yaml
 from .io.logger import logger
 from .job import MESAJob, ShellJob, SlurmJob
@@ -322,16 +322,24 @@ class Manager(object):
 
         database_filename = self.config["database"].get("filename")
         table_name = self.config["database"].get("tablename")
-        overwrite = self.config["database"].get("overwrite")
+        drop_table = self.config["database"].get("drop_table")
+        remove_database = self.config["database"].get("remove_database")
 
         # remove file if it exists
-        if overwrite:
+        if remove_database:
             try:
                 os.remove(database_filename)
+
+            except FileNotFoundError:
+                pass
+
             except Exception as e:
                 logger.info(f"cannot remove database file: {database_filename}. Exception: {e}")
 
+        # first time in the loop will create database. the rest will only insert things
+        create_db = True
         for key in self.MESAruns.keys():
+            # dict to insert into db
             table_dict = {
                 "id": int(key),
                 "run_name": str(self.MESAruns[key]["MESArun"].run_name),
@@ -340,6 +348,15 @@ class Manager(object):
                 "job_id": int(self.MESAruns[key]["job_id"]),
                 "status": "not computed",
             }
+
+            # create database if needed
+            if create_db:
+                logger.debug(f"creating table: {table_name} in database: {database_filename}")
+                create_database(database_filename=database_filename, table_name=table_name, drop_table=drop_table, table_dict=table_dict)
+                # creation completed !
+                create_db = False
+
+            # insert row into db
             logger.debug(f"inserting database element ({key}): {table_dict}")
             insert_into_database(database_filename=database_filename, table_name=table_name, table_dict=table_dict)
 
