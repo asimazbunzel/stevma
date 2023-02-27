@@ -8,8 +8,11 @@ database:
   filename: "example/example-grid.db"
   tablename: "MESAruns"
 
-  # overwrite: flag to remove `filename` and re-write it
-  overwrite: true
+  # remove_database: flag to delete database file
+  remove_database: true
+
+  # drop_table: flag to remove tablename from database
+  drop_table: true
 
 # Specific options for runs of MESA
 runs:
