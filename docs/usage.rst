@@ -191,7 +191,7 @@ inside the MESA code).
 .. warning::
    There will exist an option for the ``id`` control in the ``runs`` section which will be used to
    produce a grid of simulations using the ``mesabin2dco`` custom-made code (see
-   `MESAbin2dco https://github.com/asimazbunzel/mesabin2dco`_). In this case the following lines
+   `MESAbin2dco <https://github.com/asimazbunzel/mesabin2dco>`_). In this case the following lines
    **must** be included:
 
    .. code-block::
