@@ -28,7 +28,7 @@ default_context:
     codeclimate:               'no'
     codecov:                   'yes'
     command_line_interface:    'argparse'
-    command_line_interface_bin_name: 'mesh-manager'
+    command_line_interface_bin_name: 'run-manager'
     coveralls:                 'no'
     distribution_name:         'stevma'
     email:                     'asimazbunzel@iar.unlp.edu.ar'
