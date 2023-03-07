@@ -2,7 +2,7 @@
 Usage
 =====
 
-To use the STEVMA code, an executable called `run-manager` is created after installation.
+To use the STEVMA code, an executable called ``run-manager`` is created after installation.
 
 It is accompanied by some command-line options as detailed here:
 
@@ -17,63 +17,67 @@ It is accompanied by some command-line options as detailed here:
 Configuration file
 ------------------
 
-The option `-C` (or `--config-file`) contains all the options that are needed to produce
+The option ``-C`` (or ``--config-file``) contains all the options that are needed to produce
 a grid of MESA simulations.
 
 An example file with all the available options is listed below.
 
 .. code-block:: yaml
+   :linenos:
 
+   # ---
    # Config options for stellar evolution manager
+   # ---
 
-   # database options
+   # Database options
    database:
-     # name of the database file
-     filename: "hmxb.db"
+     # *name: file & table names (sqlite-type database)
+     filename: "example/example-grid.db"
+     tablename: "MESAruns"
 
-   # configuration for MESA runs
+     # remove_database: flag to delete database file
+     remove_database: true
+
+     # drop_table: flag to remove tablename from database
+     drop_table: true
+
+   # Specific options for runs of MESA
    runs:
-     # an id for the type of run. Available options are: `mesastar`, `mesabinary` and `mesabin2dco`
-     # `mesastar` is used to evolve isolated stars
-     # `mesabinary` models binaries using the standard MESAbinary module
-     # `mesabin2dco` uses the modified mesabinary which includes common-envelope and core-collapse
+     # id: identifier of the type of MESA simulation. Available values: `mesastar`, `mesabinary`
      id: "mesabinary"
 
-     # name of the file with the grid to be explored. This file must be in YAML format and valid
-     # names of MESA options
+     # meshgrid_filename: name of file with meshgrid options
      meshgrid_filename: "example/grid.yaml"
 
-     # directory where runs will be stored
+     # output_directory: directory where MESA namelists and directories will be saved
      output_directory: "example/runs"
 
-     # whether to add the condition to avoid re-doing a simulation that has already been created in
-     # the `output_directory`
+     # overwrite: flag to replace directories and files in `output_directory`
      overwrite: false
 
-     # include a call to a natal-kick exploration
+     # do_kicks: flag to add option for natal-kick exploration. NOT TESTED YET
      do_kicks: false
 
-     # if `do_kicks` is true, this is the file with the kick information.
-     # TODO: better explain how it works
+     # filename_kick_script: file with script to apply a distribution of natal-kicks to a binary
+     #                       system
      filename_kick_script:
 
-   # Options for the MESA template part of the code. This template contains all the options that
-   # are common to every simulation as well as the MESA executable and extra source codes
+   # Specific options for template of MESA
    template:
-     # flag to control the type of MESA simulation between the isolated or binary cases
+     # is_binary_evolution: flag to set the type of evolution: isolated or binary
      is_binary_evolution: true
 
-     # YAML file with the options that are common to each simulation. It must contain valid MESA
-     # options
+     # options_filename: MESA specific options shared by all stars in the grid
      options_filename: "example/mesa_options.yaml"
 
-     # folder where MESA source code will be located
+     # output_directory: directory where template files and MESA source code will be saved
      output_directory: "example/templates"
 
-     # whether to overwrite the creation of a template in a location which already has a template
+     # overwrite: flag to replace template files
      overwrite: true
 
-     # extras folders and files to include in the template
+     # extras:
+     #   extra_*: files to append to template directory
      extras:
        extra_dir_in_src:
        extra_files_in_src:
@@ -82,34 +86,30 @@ An example file with all the available options is listed below.
 
    # MESA options
    mesa:
-     # location of the MESA installation
+     # mesa*: environment variables needed by the MESA code
      mesa_dir: "/home/asimazbunzel/Developments/mesa-r15140"
-
-     # location of the software development kit of MESA
      mesasdk_root: "/home/asimazbunzel/Developments/mesasdk-20.12.1"
-
-     # location of the caches folder of MESA
      mesa_caches_dir: "/home/asimazbunzel/.cache/mesa-r15140"
 
-     # location of your local copy of the mesabin2dco custom MESA build
-     # (only needed if `id: "mesabin2dco"`)
+     # mesabin2dco_dir: if using custom MESAbin2dco, set path to directory
      mesabin2dco_dir: "/home/asimazbunzel/Developments/mesabin2dco"
 
-     # files with the name of the columns to be saved by MESA
+     # *_columns_filename: files with the name of the columns to be saved as output of each simulation
+     #                     in the grid by MESA
      history_columns_filename:
      profile_columns_filename:
      binary_history_columns_filename:
 
-   # options for the manager of simulations
+   # Options for the manager which launches the simulations
    manager:
-     # identifier of the manager. options are: "shell", "slurm"
-     manager: "slurm"
+     # identifier of the manager. Options are: "shell", "slurm"
+     manager: "shell"
 
-     # prefix to prepend to job filename(s)
-     job_file_prefix: "example/runs/hmxb_"
+     # job_*: prefix to prepend to job filename(s)
+     job_file_prefix: "example/runs/example_"
      job_filename: "run.sh"
 
-     # hpc options are only used if manager is "slurm"
+     # hpc: these options are only used if manager is either "pbs" or "slurm"
      hpc:
        name: "example_slurm"
        email: "asimazbunzel@iar.unlp.edu.ar"
@@ -122,63 +122,108 @@ An example file with all the available options is listed below.
        mem: 8
        walltime: "168:00:00"
 
-     # options to use for the entire mesh of models:
-     # number of jobs to divide the mesh
-     number_of_jobs: 50
-     # how many cpu cores will be using for each simulation
+     # number_of_jobs: number of jobs to divide the mesh
+     number_of_jobs: 2
+
+     # number_of_cores: how many cpu cores will be using for each simulation
      number_of_cores: 12
-     # how many jobs will be sent to compute in parallel (only used if `manager: "slurm`)
+
+     # number_of_parallel_jobs: how many jobs will be sent to compute in parallel
      number_of_parallel_jobs: 10
+
+
+About the database options
+--------------------------
+
+When creating a grid of simulations, it is better to keep track of them. For that, the code creates
+a file containing all this information using `SQLite <https://www.sqlite.org/index.html>`_ (an SQL
+database engine). This database stores a table with all the names of the runs in the grid as well
+as the directory of the MESA template and runs. In addition, it also contains some identifiers for
+each of the runs and for the jobs into which the grid is split, and a *status* which is set, for
+now, to be the same for each run: *not computed*.
+
+The database is intended to be used in combination with the
+`stevdb <https://github.com/asimazbunzel/stevdb>`_ code, an stellar-evolution database manager,
+which appends more tables to the database to have a complete summary of each simulation in the grid
+going through different stages during the evolution of the star and/or binary.
+
+For more information on the structure of the table in the database see
+:ref: `example:Database table`
+
 
 About the MESA options
 ----------------------
 
-- meshgrid file
-~~~~~~~~~~~~~~~
+meshgrid file
+~~~~~~~~~~~~~
 
-The option `meshgrid_filename` should point to a YAML formated file with the different parameters
-that will change between simulations of the grid. The available options are the different controls
-of the MESA code: `star_job`, `controls`, `binary_job` and `binary_controls`. Inside each of them,
-parameters can be set as coming from the `defaults` folder of the MESA code.
+The option ``meshgrid_filename`` should point to a YAML formatted file with the different
+parameters that will change between simulations of the grid. The available options for these
+parameters are defined by the different controls in the MESA code: ``star_job``, ``controls``,
+``binary_job`` and ``binary_controls``. Inside each of them, parameters can be set as coming from
+the ``defaults`` folder of the MESA code.
 
-For example, a valid file with a grid simulation would be:
+For example, a file containing the following options:
 
 .. code-block:: yaml
 
    binary_controls:
 
-     m1: [ 10.        ,  13.89495494,  19.30697729,  26.82695795,
-           37.2759372 ,  51.79474679,  71.9685673 , 100.        ]
+     m1: [ 10.  ,  13.89,  19.30,  26.82,
+           37.27,  51.79,  71.96, 100.  ]
 
      m2: 15
 
      initial_period_in_days: 100
 
-This file will produce 8 different simulations in the 3D grid (m1, m2, initial_period_in_days)
-space. One for each possible combination of all these parameters.
+would produce 8 different simulations in the 3D (m1, m2, initial_period_in_days)-space. One for
+each possible combination of all these parameters.
 
 
-- options file
-~~~~~~~~~~~~~~~
+options file
+~~~~~~~~~~~~
 
-In the case of the `options_filename` the situation is similar. Only valid controls from MESA are
-allowed. In this file the only thing to be careful about comes from the options connected to a
-custom `mesabin2dco` type of simulation. In the case the following lines **must** be included:
+In the case of the ``options_filename`` the situation is similar. Only valid controls from MESA are
+allowed. Controls found inside this file will ont change between different simulations. If a MESA
+control is not found in here, the default value is assumed (as found in the ``defaults`` directory
+inside the MESA code).
+
+.. warning::
+   There will exist an option for the ``id`` control in the ``runs`` section which will be used to
+   produce a grid of simulations using the ``mesabin2dco`` custom-made code (see
+   `MESAbin2dco https://github.com/asimazbunzel/mesabin2dco`_). In this case the following lines
+   **must** be included:
+
+   .. code-block::
+
+      bin2dco_controls:
+
+        star_plus_pm_filename: " #{template}/inlist_project"
+
+        cc2_inlist_filename: "#{template}/inlist_cc"
+        ce2_inlist_filename: "#{template}/inlist_ce"
+
+   The tag seen in the example above, `#{template}` is used by the manager to replace that string
+   with the actual path to the template directory.
+
+.. note::
+   This same syntax of tagging the template directory with `#{template}` should also be
+   used in case the `history_columns_filename`, `profile_columns_filename` and/or
+   `binary_history_columns_filename` are set in the config-file. In this case, the
+   `options_filename` should include lines with
+   `binary_history_columns_file: "#{template}/binary_history_columns.list"`,
+   `history_columns_file: "#{template}/history_columns.list"` and/or
+   `profile_columns_file: "#{template}/profile_columns.list"` in the corresponding `binary_job`
+   and/or `star_job` sections.
+
+Example: a fixed wind prescription according to the `Dutch` scheme defined in MESA, with the custom
+column names defined in a file called `history_columns.list` would imply adding the following
+options:
 
 .. code-block::
 
-   bin2dco_controls:
-
-     star_plus_pm_filename: " #{template}/inlist_project"
-
-     cc2_inlist_filename: "#{template}/inlist_cc"
-     ce2_inlist_filename: "#{template}/inlist_ce"
-
-The rest of the file should contain parameters that do not change between simulations.
-
-For example, assuming a fixed wind prescription would imply adding:
-
-.. code-block::
+   star_job:
+     history_columns_file: "#{template}/history_columns.list"
 
    controls:
      cool_wind_full_on_T: 0.8d4
