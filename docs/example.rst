@@ -132,7 +132,7 @@ On top of all this, a file with the database will be created. It will contain th
 table:
 
 .. list-table: MESAruns
-   :widths: 5, 45, 20, 20, 5, 5
+   :widths: 5 45 20 20 5 5
    :header-rows: 1
 
    * - id
