@@ -131,9 +131,7 @@ Database
 On top of all this, a file with the database will be created. It will contain the following
 table:
 
-.. list-table:: MESAruns
-   :widths: 5 45 20 20 5 5
-   :header-rows: 1
+.. list-table::
 
    * - id
      - run_name
