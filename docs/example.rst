@@ -35,7 +35,6 @@ directories in the example directory: ``runs`` and ``templates``.
 
 In case something goes wrong, the log file will have more information to help debug the error.
 
-
 Template
 ~~~~~~~~
 
@@ -69,7 +68,6 @@ On the one hand, the tree structure inside the template should contain
        ├── binary_run.f90
        ├── run_binary_extras.f90
        └── run_star_extras.f90
-
 
 Runs
 ~~~~
@@ -127,12 +125,54 @@ The rest of the directories found inside ``runs`` corresponds to the different b
 explored in the grid, each of them containing MESA inlist files with their different options as
 specified in the ``mesa_options.yaml`` file.
 
+Database
+~~~~~~~~
+
+On top of all this, a file with the database will be created. It will contain the following
+table:
+
+.. list-table: MESAruns
+   :widths: 5, 45, 20, 20, 5, 5
+   :header-rows: 1
+
+   * - id
+     - run_name
+     - template_directory
+     - runs_directory
+     - job_id
+     - status
+   * - 0
+     - m1_10.0_m2_15.0_initial_period_in_days_100.0
+     - example/templates
+     - example/runs
+     - 0
+     - not computed
+   * - 1
+     - m1_13.89_m2_15.0_initial_period_in_days_100.0
+     - example/templates
+     - example/runs
+     - 0
+     - not computed
+
+The complete table should have 8 elements and can be loaded using the ``sqlite3`` command-line
+program,
+
+.. code-block::
+
+   $ cd example
+   $ sqlite3
+   sqlite> ATTACH DATABASE "example-grid.db" as example;
+   sqlite> .header on
+   sqlite> .mode column --wrap 50
+   sqlite> SELECT * FROM MESAruns;
+
+
 Run the scripts
 ~~~~~~~~~~~~~~~
 
 To start computing the evolution of the binaries in the grid, simply run the ``*.sh`` scripts:
 
-.. code-block:: console
+.. code-block::
 
    ./hmxb_run.sh job_0.folders &
    ./hmxb_run.sh job_1.folders &
