@@ -7,8 +7,10 @@ In this section we show an example of how the manager works.
 This example case will create a grid of binary systems to explore with the MESAbinary module of
 the MESA code.
 
-All the options needed to replicate it can be found in the `example` folder of the source code in
-GitHub, which should contain the following files
+All the options needed to replicate it can be found in the ``example`` directory of the source code
+in GitHub (see `example-grid <https://github.com/asimazbunzel/stevma/tree/main/example>`_).
+
+This directory contains the following files:
 
 .. code-block::
 
@@ -17,23 +19,27 @@ GitHub, which should contain the following files
    ├── manager_options.yaml
    └── mesa_options.yaml
 
-The file named as `manager_options.yaml` must be sent through the command line when executing
-`run-manager`,
+The file named as ``manager_options.yaml`` must be passed through the command line when executing
+``run-manager``:
 
 .. code-block::
 
    run-manager -C example/manager_options.yaml -d
 
-The `-d` flag will save more information to a log file as it will be run in debugging mode.
+The ``-d`` flag will save more information to a log file as it will be executed in debugging mode
+(for more command-line options, see :ref: `usage:Usage from the command line`). To access to the
+log filename, first run the manager with the ``--show-log-name`` option.
 
-If everything goes well, at the end of the execution of the manager, there will be two new folders
-in the example directory: `runs` and `templates`.
+If everything goes well, at the end of the execution of the manager, there will be two new
+directories in the example directory: ``runs`` and ``templates``.
+
+In case something goes wrong, the log file will have more information to help debug the error.
 
 
 Template
 ~~~~~~~~
 
-The tree structure inside the template should contain
+On the one hand, the tree structure inside the template should contain
 
 .. code-block::
 
@@ -68,12 +74,12 @@ The tree structure inside the template should contain
 Runs
 ~~~~
 
-As for the runs folder, will hold the following stuff
+On the other hand, the runs directory will have the following stuff
 
 .. code-block::
 
    runs
-   ├── hmxb_run.sh
+   ├── example_run.sh
    ├── job_0.folders
    ├── job_1.folders
    ├── m1_100.0_m2_15.0_initial_period_in_days_100.0
@@ -84,50 +90,52 @@ As for the runs folder, will hold the following stuff
    │   ├── inlist1
    │   ├── inlist2
    │   └── inlist_binary
-   ├── m1_13.89495494_m2_15.0_initial_period_in_days_100.0
+   ├── m1_13.89_m2_15.0_initial_period_in_days_100.0
    │   ├── inlist1
    │   ├── inlist2
    │   └── inlist_binary
-   ├── m1_19.30697729_m2_15.0_initial_period_in_days_100.0
+   ├── m1_19.3_m2_15.0_initial_period_in_days_100.0
    │   ├── inlist1
    │   ├── inlist2
    │   └── inlist_binary
-   ├── m1_26.82695795_m2_15.0_initial_period_in_days_100.0
+   ├── m1_26.82_m2_15.0_initial_period_in_days_100.0
    │   ├── inlist1
    │   ├── inlist2
    │   └── inlist_binary
-   ├── m1_37.2759372_m2_15.0_initial_period_in_days_100.0
+   ├── m1_37.27_m2_15.0_initial_period_in_days_100.0
    │   ├── inlist1
    │   ├── inlist2
    │   └── inlist_binary
-   ├── m1_51.79474679_m2_15.0_initial_period_in_days_100.0
+   ├── m1_51.79_m2_15.0_initial_period_in_days_100.0
    │   ├── inlist1
    │   ├── inlist2
    │   └── inlist_binary
-   └── m1_71.9685673_m2_15.0_initial_period_in_days_100.0
+   └── m1_71.96_m2_15.0_initial_period_in_days_100.0
        ├── inlist1
        ├── inlist2
        └── inlist_binary
 
-The file named `hmxb_run.sh` is the shell script that will send the simulations to be computed
-either to a another shell terminal emulator or to a submission queue manager, depending on the
-options specified in the YAML with the manager commands.
+The file named ``example_run.sh`` is the shell script that will handle the launch of all the
+simulations in the grid. The script can be managed by the shell itself or by a queue manager. This
+is controlled by the option ``manager`` in the ``manager`` section (see file
+``example/manager_options.yaml``). The available options are: ``shell`` or ``slurm``.
 
-Files ending in `*.folders` contain a list of the folders where simulations will be computed.
+Files with the ``*.folders`` suffix contain a list of the directories where simulations will be
+computed.
 
-The rest of the folders are the different binaries to be explored in the grid, each of them
-containing MESA inlist files with their different options as specified in the `mesa_options.yaml`
-file.
+The rest of the directories found inside ``runs`` corresponds to the different binaries to be
+explored in the grid, each of them containing MESA inlist files with their different options as
+specified in the ``mesa_options.yaml`` file.
 
 Run the scripts
 ~~~~~~~~~~~~~~~
 
-To start computing the evolution of the binaries in the grid, simply run the `*.sh` scripts:
+To start computing the evolution of the binaries in the grid, simply run the ``*.sh`` scripts:
 
-.. code-block::
+.. code-block:: console
 
    ./hmxb_run.sh job_0.folders &
    ./hmxb_run.sh job_1.folders &
 
-The `&` is used to send the files to the background, but you can also create screen or tmux
+The ``&`` is used to send the files to the background, but you can also create screen or tmux
 sesssion and have complete control of the terminals through them.
