@@ -24,7 +24,7 @@ The file named as ``manager_options.yaml`` must be passed through the command li
 
 .. code-block::
 
-   run-manager -C example/manager_options.yaml -d
+   $ run-manager -C example/manager_options.yaml -d
 
 The ``-d`` flag will save more information to a log file as it will be executed in debugging mode
 (for more command-line options, see :ref: `usage:Usage from the command line`). To access to the
@@ -131,26 +131,13 @@ Database
 On top of all this, a file with the database will be created. It will contain the following
 table:
 
-.. list-table::
-
-   * - id
-     - run_name
-     - template_directory
-     - runs_directory
-     - job_id
-     - status
-   * - 0
-     - m1_10.0_m2_15.0_initial_period_in_days_100.0
-     - example/templates
-     - example/runs
-     - 0
-     - not computed
-   * - 1
-     - m1_13.89_m2_15.0_initial_period_in_days_100.0
-     - example/templates
-     - example/runs
-     - 0
-     - not computed
++-----+-----------------------------------------------+--------------------+----------------+--------+--------------+
+| id  | run_name                                      | template_directory | runs_directory | job_id | status       |
++=====+===============================================+====================+================+========+==============+
+| 0   | m1_10.0_m2_15.0_initial_period_in_days_100.0  | example/templates  | example/runs   | 0      | not computed |
++-----+-----------------------------------------------+--------------------+----------------+--------+--------------+
+| 1   | m1_13.89_m2_15.0_initial_period_in_days_100.0 | example/templates  | example/runs   | 0      | not computed |
++-----+-----------------------------------------------+--------------------+----------------+--------+--------------+
 
 The complete table should have 8 elements and can be loaded using the ``sqlite3`` command-line
 program,
@@ -172,8 +159,8 @@ To start computing the evolution of the binaries in the grid, simply run the ``*
 
 .. code-block::
 
-   ./hmxb_run.sh job_0.folders &
-   ./hmxb_run.sh job_1.folders &
+   $ ./hmxb_run.sh job_0.folders &
+   $ ./hmxb_run.sh job_1.folders &
 
 The ``&`` is used to send the files to the background, but you can also create screen or tmux
 sesssion and have complete control of the terminals through them.
