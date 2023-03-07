@@ -1,5 +1,6 @@
 example/runs
 example/templates
+example/*.db
 
 *.py[cod]
 __pycache__
