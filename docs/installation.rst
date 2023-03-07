@@ -9,13 +9,13 @@ First, clone the repository in your computer:
 
 .. code-block::
 
-   git clone https://github.com/asimazbunzel/stevma.git
+   $ git clone https://github.com/asimazbunzel/stevma.git
 
 or
 
 .. code-block::
 
-   git clone git@github.com:asimazbunzel/stevma.git
+   $ git clone git@github.com:asimazbunzel/stevma.git
 
 depending if you have git set up or you are using an SSH key.
 
@@ -27,7 +27,7 @@ run the following code
 
 .. code-block::
 
-   pip install .
+   $ pip install .
 
 This will create the executable `run-manager` that will handle the creation of the
 grid.

@@ -15,6 +15,7 @@ It is and open source project hosted in Github:
    installation
    usage
    example
+   controls
    reference/index
    contributing
    authors

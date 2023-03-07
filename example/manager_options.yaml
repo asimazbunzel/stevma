@@ -75,7 +75,7 @@ mesa:
 
 # Options for the manager which launches the simulations
 manager:
-  # identifier of the manager. Options are: "shell", "slurm"
+  # manager: identifier of the manager. Options are: "shell", "slurm"
   manager: "shell"
 
   # job_*: prefix to prepend to job filename(s)
