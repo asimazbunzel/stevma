@@ -173,7 +173,8 @@ def namelist_string_to_dict(buffer: str = "") -> dict:
     Returns
     -------
     namelists : `dict`
-        Ordered dictionary with namelists options. Each element of the dictionary is, in itself, another dictionary
+        Ordered dictionary with namelists options. Each element of the dictionary is, in itself,
+        another dictionary
     """
 
     # nothing in buffer, raise error flag
