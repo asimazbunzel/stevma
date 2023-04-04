@@ -74,11 +74,13 @@ functions for faster development.
 To download and install Poetry run:
 
 .. code-block::
+
   make poetry-download
 
 To uninstall
 
 .. code-block::
+
   make poetry-remove
 
 2. Install all dependencies and pre-commit hooks
@@ -86,11 +88,13 @@ To uninstall
 Install requirements:
 
 .. code-block::
+
    make install
 
 Pre-commit hooks coulb be installed after `git init` via
 
 .. code-block::
+
   make pre-commit-install
 
 3. Codestyle
@@ -98,6 +102,7 @@ Pre-commit hooks coulb be installed after `git init` via
 Automatic formatting uses `pyupgrade`, `isort` and `black`.
 
 .. code-block::
+
   make codestyle
 
   # or use synonym
@@ -106,25 +111,30 @@ Automatic formatting uses `pyupgrade`, `isort` and `black`.
 Codestyle checks only, without rewriting files:
 
 .. code-block::
+
   make check-codestyle
 
 .. note::
+
    `check-codestyle` uses `isort`, `black` and `darglint` library
 
 Update all dev libraries to the latest version using one comand
 
 .. code-block::
+
   make update-dev-deps
 
 4. Code security
 
 .. code-block::
+
   make check-safety
 
 This command launches `Poetry` integrity checks as well as identifies security issues with
 `Safety` and `Bandit`.
 
 .. code-block::
+
   make check-safety
 
 5. Type checks
@@ -132,6 +142,7 @@ This command launches `Poetry` integrity checks as well as identifies security i
 Run `mypy` static type checker
 
 .. code-block::
+
   make mypy
 
 And many more ! See much more information on this
