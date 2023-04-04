@@ -3,10 +3,10 @@
 # ---
 
 # Database options
-database:
+Database:
   # *name: file & table names (sqlite-type database)
   filename: "example/example-grid.db"
-  tablename: "MESAruns"
+  tablename: "MESAmodels"
 
   # remove_database: flag to delete database file
   remove_database: true
@@ -14,8 +14,8 @@ database:
   # drop_table: flag to remove tablename from database
   drop_table: true
 
-# Specific options for runs of MESA
-runs:
+# Specific options for models of MESA
+Models:
   # id: identifier of the type of MESA simulation. Available values: `mesastar`, `mesabinary`
   id: "mesabinary"
 
@@ -36,7 +36,7 @@ runs:
   filename_kick_script:
 
 # Specific options for template of MESA
-template:
+Template:
   # is_binary_evolution: flag to set the type of evolution: isolated or binary
   is_binary_evolution: true
 
@@ -58,7 +58,7 @@ template:
     extra_makefile:
 
 # MESA options
-mesa:
+Mesa:
   # mesa*: environment variables needed by the MESA code
   mesa_dir: "/home/asimazbunzel/Developments/mesa-r15140"
   mesasdk_root: "/home/asimazbunzel/Developments/mesasdk-20.12.1"
@@ -74,7 +74,7 @@ mesa:
   binary_history_columns_filename:
 
 # Options for the manager which launches the simulations
-manager:
+Manager:
   # identifier of the manager. Options are: "shell", "slurm"
   manager: "shell"
 
