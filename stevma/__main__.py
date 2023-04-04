@@ -35,16 +35,15 @@ def start() -> None:
 
     logger.info("manager started")
 
-    print("initializing manager and creating grid of MESA models", end="... ", flush=True)
-
     # manager
     core = Manager()
 
     # if only wanting to print name of log name
     if core.args.log_fname:
-        print("done")
         print(f"LOG FILENAME is: `{LOG_FILENAME}`")
         end()
+
+    print("initializing manager and creating grid of MESA models", end="... ", flush=True)
 
     # create meshgrid
     core.set_meshgrid()
