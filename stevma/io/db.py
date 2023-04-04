@@ -2,9 +2,10 @@
 Database module
 """
 
+from collections import OrderedDict
+import os
 import sqlite3
 import time
-from collections import OrderedDict
 
 import numpy as np
 
@@ -25,14 +26,35 @@ class Database:
         bool: "INTEGER",
     }
 
-    def __init__(self, database_name: str = "") -> None:
+    def __init__(self, database_name: str = "", remove_database: bool = False) -> None:
         logger.debug(f" Database: connecting to `{database_name}`")
 
+        # filename
+        self.database_filename = database_name
+
+        # remove if necessary
+        if remove_database:
+            try:
+                self.remove_database()
+            except Exception:
+                pass
+
+        # only after trying to remove, create connection
         self.connection = sqlite3.connect(database_name)
         self.cursor = self.connection.cursor()
 
     def commit(self) -> None:
         self.connection.commit()
+
+    def remove_database(self):
+        try:
+            os.remove(self.database_filename)
+
+        except FileNotFoundError:
+            pass
+
+        except Exception as e:
+            raise e
 
     def create_table(
         self, table_name: str = "", table_data_dict: OrderedDict = OrderedDict()
@@ -52,6 +74,13 @@ class Database:
         sql = sql[:-2]
         sql += ");"
 
+        self.execute(sql)
+        self.commit()
+
+    def drop_table(self, table_name: str = "") -> None:
+        logger.debug(f" Database: droping table `{table_name}`")
+
+        sql: str = f"DROP TABLE IF EXISTS {table_name};"
         self.execute(sql)
         self.commit()
 
