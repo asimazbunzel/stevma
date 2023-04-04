@@ -23,21 +23,9 @@ up-to-date information about installing and using STEVMA.
 
 [![License](https://img.shields.io/github/license/asimazbunzel/stevma)](https://github.com/asimazbunzel/stevma/blob/master/LICENSE)
 
-This project is licensed under the terms of the `MIT` license. See
-[LICENSE](https://github.com/asimazbunzel/stevma/blob/master/LICENSE) for more details.
-
-## 📃 Citation
-
-```bibtex
-@misc{stevma,
-  author = {asimazbunzel},
-  title = {Stellar evolution manager},
-  year = {2023},
-  publisher = {GitHub},
-  journal = {GitHub repository},
-  howpublished = {\url{https://github.com/asimazbunzel/stevma}}
-}
-```
+This project is licensed under the terms of the GNU Lesser General Public License v2.1 (LGPLv2)
+license. See [LICENSE](https://github.com/asimazbunzel/stevma/blob/master/LICENSE) for more
+details.
 
 ## Credits [![🚀 Your next Python package needs a bleeding-edge project structure.](https://img.shields.io/badge/python--package--template-%F0%9F%9A%80-brightgreen)](https://github.com/TezRomacH/python-package-template)
 
