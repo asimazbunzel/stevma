@@ -4,7 +4,9 @@
 from collections import OrderedDict
 import os
 from pathlib import Path
-from typing import Union
+from typing import Union, Tuple
+
+import numpy as np
 
 from stevma.io import parse_fortran_value_to_python
 
@@ -177,6 +179,44 @@ def get_mesa_defaults(mesa_dir: Union[str, Path] = "") -> dict:
             MESADefaults[namelist] = namelist_defaults(fname=fname)
 
     return MESADefaults
+
+def split_grid(number_of_grids: int = 1, Grid: dict = {}) -> Tuple[int, dict]:
+    """Split grid into smaller subgrids
+
+    Parameters
+    ----------
+    number_of_grids : `int`
+        Number of subgrids to split grid
+
+    grid : `dict`
+        Dictionary with complete meshgrid points
+
+    Returns
+    -------
+    subgrids : `dict`
+        Dictionary with smaller grids
+    """
+
+    if number_of_grids <= 0:
+        raise ValueError(f"number_of_grids cannot be lower than 0: {number_of_grids}")
+
+    if len(Grid) == 0:
+        raise ValueError(f"Grid cannot be 0: {Grid}")
+
+    # force number_of_grids to be an integer
+    number_of_grids = int(number_of_grids)
+
+    # create array with number of elements
+    elements_in_grid = np.arange(len(Grid))
+
+    # create array in which each element in another array of indexes
+    array_of_indexes = np.array_split(elements_in_grid, number_of_grids)
+
+    for k, arr in enumerate(array_of_indexes):
+        for j in arr:
+            Grid[f"{j}"]["job_id"] = k
+
+    return Grid
 
 
 mesa_namelists = MESANamelists()
