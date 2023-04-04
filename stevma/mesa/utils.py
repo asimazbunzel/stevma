@@ -1,17 +1,18 @@
 """Module with utils functions and classes for a MESA model
 """
 
-from collections import OrderedDict
+from typing import Tuple, Union
+
 import os
+from collections import OrderedDict
 from pathlib import Path
-from typing import Union, Tuple
 
 import numpy as np
 
 from stevma.io import parse_fortran_value_to_python
 
 
-class MESANamelists(object):
+class MESANamelists:
     """Namelists of MESA"""
 
     def __init__(self):
@@ -20,7 +21,7 @@ class MESANamelists(object):
         self.bin2dco_namelists = ("bin2dco_controls",)
 
 
-class MESAMainNamelists(object):
+class MESAMainNamelists:
     """Structure of the most important files for initializing a MESA simulation"""
 
     def __init__(self):
@@ -105,7 +106,7 @@ def namelist_defaults(fname: Union[str, Path]) -> dict:
     if not fname.is_file():
         raise FileNotFoundError(f"`{fname}` not found")
 
-    with open(fname, "r") as f:
+    with open(fname) as f:
         lines = [line.strip() for line in f.readlines() if len(line) > 0]
 
     options = OrderedDict()
@@ -115,9 +116,7 @@ def namelist_defaults(fname: Union[str, Path]) -> dict:
 
             if len(line.split("=")) < 2:
                 raise ValueError(f"error in line: {line}")
-            elif (
-                len(line.split("=")) > 2
-            ):  # there is just one string in the defaults with two '='
+            elif len(line.split("=")) > 2:  # there is just one string in the defaults with two '='
                 name, lval, rval = line.split("=")
                 value = f"{lval}={rval}"
             else:
@@ -179,6 +178,7 @@ def get_mesa_defaults(mesa_dir: Union[str, Path] = "") -> dict:
             MESADefaults[namelist] = namelist_defaults(fname=fname)
 
     return MESADefaults
+
 
 def split_grid(number_of_grids: int = 1, Grid: dict = {}) -> Tuple[int, dict]:
     """Split grid into smaller subgrids

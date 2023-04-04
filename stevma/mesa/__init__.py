@@ -3,14 +3,14 @@
 
 import pprint
 
-from .utils import get_mesa_defaults, mesa_namelists
 from stevma.io import Database, logger, progress_bar
 from stevma.job import MESAJob, ShellJob, SlurmJob
+
 from .mesa import MESAmodel
-from .utils import split_grid
+from .utils import get_mesa_defaults, mesa_namelists, split_grid
 
 
-class MESAGrid(object):
+class MESAGrid:
     """Class representing a grid of MESA models
 
     Parameters
@@ -18,6 +18,7 @@ class MESAGrid(object):
     meshgrid : `dict`
         Dictionary with input values of the grid of MESA models
     """
+
     def __init__(self, meshgrid: dict = dict(), config: dict = dict()) -> None:
         self.meshgrid = meshgrid
         self.config = config
@@ -37,9 +38,7 @@ class MESAGrid(object):
         logger.info("creating MESAmodel objects for each element in the meshgrid")
 
         if self.meshgrid is None:
-            logger.critical(
-                "meshgrid object is not defined. need to call `set_meshgrid` before"
-            )
+            logger.critical("meshgrid object is not defined. need to call `set_meshgrid` before")
             sys.exit(1)
 
         # some useful dictionaries for creating MESAmodel objects
@@ -70,9 +69,7 @@ class MESAGrid(object):
             )
 
             # load options for MESA simulations
-            self.MESAmodels[key]["MESAmodel"].load_options(
-                templateDict.get("options_filename")
-            )
+            self.MESAmodels[key]["MESAmodel"].load_options(templateDict.get("options_filename"))
 
             # get dictionaries for template & run namelists
             self.MESAmodels[key]["MESAmodel"].set_template_namelists()
@@ -100,20 +97,20 @@ class MESAGrid(object):
         extras = templateDict.get("extras")
 
         if not extras["extra_dir_in_src"] is None:
-           if len(extras["extra_dir_in_src"]) > 0:
-              extra_src_folders = extras["extra_dir_in_src"]
+            if len(extras["extra_dir_in_src"]) > 0:
+                extra_src_folders = extras["extra_dir_in_src"]
 
         if not extras["extra_files_in_src"] is None:
-           if len(extras["extra_files_in_src"]) > 0:
-              extra_src_files = extras["extra_files_in_src"]
+            if len(extras["extra_files_in_src"]) > 0:
+                extra_src_files = extras["extra_files_in_src"]
 
         if not extras["extra_template_files"] is None:
-           if len(extras["extra_template_files"]) > 0:
-              extra_template_files = extras["extra_template_files"]
+            if len(extras["extra_template_files"]) > 0:
+                extra_template_files = extras["extra_template_files"]
 
         if not extras["extra_makefile"] is None:
-           if len(extras["extra_makefile"]) > 0:
-              extra_makefile = extras["extra_makefile"]
+            if len(extras["extra_makefile"]) > 0:
+                extra_makefile = extras["extra_makefile"]
 
         # if the id of the runs is `mesabin2dco`, add inlists from src code
         if runsDict.get("id") == "mesabin2dco":
@@ -143,7 +140,6 @@ class MESAGrid(object):
             if name is not None and name != "":
                 list_filenames.append(name)
         self.MESAmodels[key0]["MESAmodel"].copy_column_list_files(filenames=list_filenames)
-
 
         # create and store namelists into each run folder
         for key in self.meshgrid.keys():
@@ -334,9 +330,7 @@ class MESAGrid(object):
 
         # check that the job_id is lower than the number of jobs
         if job_id > number_of_jobs:
-            logger.critical(
-                "job_id cannot be higher than the number of jobs (number_of_jobs)"
-            )
+            logger.critical("job_id cannot be higher than the number of jobs (number_of_jobs)")
             sys.exit(1)
 
         # name of the file with the runs of the specific job_id

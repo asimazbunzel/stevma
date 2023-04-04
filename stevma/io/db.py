@@ -2,10 +2,10 @@
 Database module
 """
 
-from collections import OrderedDict
 import os
 import sqlite3
 import time
+from collections import OrderedDict
 
 import numpy as np
 

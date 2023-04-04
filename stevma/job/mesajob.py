@@ -1,11 +1,12 @@
 """Module with MESA job object"""
 
-from pathlib import Path
 from typing import Union
+
 import os
+from pathlib import Path
 
 
-class MESAJob(object):
+class MESAJob:
     """Controls for MESA stellar evolution simulations needed to make runs
 
     Parameters
@@ -63,9 +64,9 @@ class MESAJob(object):
         """Create string to initialize MESA inside a shell script"""
 
         string = "\nmesainit () {\n"
-        string += '   export MESASDK_ROOT="{}"\n'.format(self.mesasdk_dir)
-        string += '   export MESA_DIR="{}"\n'.format(self.mesa_dir)
-        string += '   export MESA_CACHES_DIR="{}"\n'.format(self.mesa_caches_dir)
+        string += f'   export MESASDK_ROOT="{self.mesasdk_dir}"\n'
+        string += f'   export MESA_DIR="{self.mesa_dir}"\n'
+        string += f'   export MESA_CACHES_DIR="{self.mesa_caches_dir}"\n'
         string += "   source $MESASDK_ROOT/bin/mesasdk_init.sh\n"
         string += "}\n"
 
@@ -95,10 +96,10 @@ class MESAJob(object):
         template_directory = str(template_directory)
         runs_directory = str(runs_directory)
 
-        string = "\nexport MESA_TEMPLATE_DIR={}\n".format(template_directory)
-        string += "export MESA_RUNS_DIR={}\n".format(runs_directory)
+        string = f"\nexport MESA_TEMPLATE_DIR={template_directory}\n"
+        string += f"export MESA_RUNS_DIR={runs_directory}\n"
         if set_mesa_inlist:
-            string += "export MESA_INLIST={}/inlist\n".format(template_directory)
+            string += f"export MESA_INLIST={template_directory}/inlist\n"
 
         return string
 

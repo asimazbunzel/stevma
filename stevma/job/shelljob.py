@@ -1,12 +1,13 @@
 """Module with shell job object"""
 
-from pathlib import Path
-import subprocess
 from typing import Union
+
 import os
+import subprocess
+from pathlib import Path
 
 
-class ShellJob(object):
+class ShellJob:
     """Shell job to handle grid of stellar evolution simulations"""
 
     def __init__(

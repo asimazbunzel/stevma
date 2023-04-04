@@ -1,17 +1,19 @@
 """Module with single MESA model
 """
-import time
-import subprocess
-import sys
-from pathlib import Path
-from shutil import copyfile, copytree, rmtree
 from typing import Union
 
+import subprocess
+import sys
+import time
+from pathlib import Path
+from shutil import copyfile, copytree, rmtree
+
 from stevma.io import dump_dict_to_namelist_string, load_yaml, logger
+
 from .utils import get_mesa_defaults, mesa_main_namelists, mesa_namelists
 
 
-class MESAmodel(object):
+class MESAmodel:
     """Object corresponding to a single MESA model
 
     This model can be either a single or a binary evolution.
@@ -344,7 +346,7 @@ class MESAmodel(object):
         """
 
         namelists = [namelist for namelist in mesa_namelists.star_namelists]
-        namelists.extend(([namelist for namelist in mesa_namelists.binary_namelists]))
+        namelists.extend([namelist for namelist in mesa_namelists.binary_namelists])
 
         keys_to_pop = []
         for namelist in namelists:
@@ -387,17 +389,11 @@ class MESAmodel(object):
             if self.model_id == "mesabinary":
                 # need to replace some strings here
                 for namelist in mesa_namelists.binary_namelists:
-                    dictNamelist = mesa_main_namelists.namelists_for_mesabinary[
-                        namelist
-                    ]
-                    inlistNamelists[namelist] = replace_template_string_in_dict(
-                        dictNamelist
-                    )
+                    dictNamelist = mesa_main_namelists.namelists_for_mesabinary[namelist]
+                    inlistNamelists[namelist] = replace_template_string_in_dict(dictNamelist)
 
             elif self.model_id == "mesabin2dco":
-                dictNamelist = mesa_main_namelists.namelists_for_mesabin2dco[
-                    "bin2dco_controls"
-                ]
+                dictNamelist = mesa_main_namelists.namelists_for_mesabin2dco["bin2dco_controls"]
                 mesabin2dcoOptions = self.__get_non_default_values_for_namelists__(
                     Options=self._MESAOptions,
                     namelists=mesa_namelists.bin2dco_namelists,
@@ -417,14 +413,10 @@ class MESAmodel(object):
                 # again, some replacements are needed
                 for namelist in mesa_namelists.star_namelists:
                     dictNamelist = mesa_main_namelists.namelists_for_mesastar[namelist]
-                    inlistNamelists[namelist] = replace_template_string_in_dict(
-                        dictNamelist
-                    )
+                    inlistNamelists[namelist] = replace_template_string_in_dict(dictNamelist)
 
             else:
-                logger.critical(
-                    f"{self.model_id}: unknown id for creating template star namelists"
-                )
+                logger.critical(f"{self.model_id}: unknown id for creating template star namelists")
                 sys.exit(1)
 
         self.namelists_for_init = inlistNamelists
@@ -445,9 +437,7 @@ class MESAmodel(object):
                 if "inlist_names(2)" not in mesabinaryOptions["binary_job"]:
                     mesabinaryOptions["binary_job"]["inlist_names(2)"] = "inlist2"
 
-                self.namelists_for_template = self.__pop_empty_namelists__(
-                    d=mesabinaryOptions
-                )
+                self.namelists_for_template = self.__pop_empty_namelists__(d=mesabinaryOptions)
 
                 starOptions = self.__get_non_default_values_for_namelists__(
                     Options=self._MESAOptions, namelists=mesa_namelists.star_namelists
@@ -468,14 +458,10 @@ class MESAmodel(object):
                     Options=self._MESAOptions, namelists=mesa_namelists.star_namelists
                 )
 
-                self.namelists_for_template = self.__pop_empty_namelists__(
-                    d=mesastarOptions
-                )
+                self.namelists_for_template = self.__pop_empty_namelists__(d=mesastarOptions)
 
             else:
-                logger.critical(
-                    f"{self.model_id}: unknown id for creating template star namelists"
-                )
+                logger.critical(f"{self.model_id}: unknown id for creating template star namelists")
                 sys.exit(1)
 
     def set_run_namelists(self) -> None:
@@ -638,9 +624,7 @@ class MESAmodel(object):
                     if folder_name.is_dir():
                         copytree(folder_name, output_folder)
                     else:
-                        logger.error(
-                            f"could not copy folder {folder_name}. folder not found"
-                        )
+                        logger.error(f"could not copy folder {folder_name}. folder not found")
 
         # create folders inside src/
         if len(extra_src_folders) > 0:
@@ -715,9 +699,7 @@ class MESAmodel(object):
             raise ValueError(f"{self.mesasdk_dir} is not a valid MESASDK installation")
 
         if not self.mesa_caches_dir.is_dir():
-            raise ValueError(
-                f"{self.mesa_caches_dir} is not a valid MESA caches location"
-            )
+            raise ValueError(f"{self.mesa_caches_dir} is not a valid MESA caches location")
 
         # source MESA env vars
         mesa_env_vars_string = f"export MESA_DIR={self.mesa_dir}; "
@@ -890,9 +872,7 @@ class MESAmodel(object):
                     f.write(inlist_star_file_string)
 
             else:
-                logger.critical(
-                    f"{self.model_id}: unknown id for creating run of binary namelists"
-                )
+                logger.critical(f"{self.model_id}: unknown id for creating run of binary namelists")
                 sys.exit(1)
 
         else:
@@ -928,12 +908,8 @@ class MESAmodel(object):
 
             # if this is a binary evolution copy the binary history columns file
             if self.is_binary_evolution:
-                binary_history_infile = (
-                    self.mesa_dir / "binary/defaults" / _binary_history_filename
-                )
-                binary_history_outfile = (
-                    self.template_directory / _binary_history_filename
-                )
+                binary_history_infile = self.mesa_dir / "binary/defaults" / _binary_history_filename
+                binary_history_outfile = self.template_directory / _binary_history_filename
                 copyfile(binary_history_infile, binary_history_outfile)
 
         else:
@@ -942,4 +918,3 @@ class MESAmodel(object):
                 outfile = self.template_directory / _fname
                 infile = Path(file)
                 copyfile(infile, outfile)
-

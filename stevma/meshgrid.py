@@ -35,7 +35,7 @@ def check_for_valid_namelist_options(d: dict = {}, mesa_dir: str = "") -> bool:
 
     # check that each key in the dict grid is actually a valid namelist
     namelists = [namelist for namelist in mesa_namelists.star_namelists]
-    namelists.extend(([namelist for namelist in mesa_namelists.binary_namelists]))
+    namelists.extend([namelist for namelist in mesa_namelists.binary_namelists])
 
     is_okay = True
     for key in d.keys():
@@ -47,9 +47,7 @@ def check_for_valid_namelist_options(d: dict = {}, mesa_dir: str = "") -> bool:
             tmpDict = d[key]
             for subkey in tmpDict.keys():
                 if subkey not in _MESADefaults.get(key):
-                    logger.critical(
-                        f"option `{subkey}` not valid (not found in MESA defaults)"
-                    )
+                    logger.critical(f"option `{subkey}` not valid (not found in MESA defaults)")
                     is_okay = False
                     break
 
@@ -114,20 +112,18 @@ def create_meshgrid_from_dict(d: dict = {}, conditions: list = []) -> dict:
 
     # now we check some important stuff for binary evolution such as to avoid repeting simulations
     if len(conditions) > 0:
-       keys_to_pop = []  # keys to remove from meshgrid are stored in this array
-       for key in meshgrid.keys():
-          tmpDict = meshgrid.get(key)
-          for k, condition in enumerate(conditions):
-              if condition(tmpDict):
-                  logger.debug(
-                      f"failed condition {k}: going to remove index {key} from meshgrid"
-                  )
-                  keys_to_pop.append(f"{key}")
+        keys_to_pop = []  # keys to remove from meshgrid are stored in this array
+        for key in meshgrid.keys():
+            tmpDict = meshgrid.get(key)
+            for k, condition in enumerate(conditions):
+                if condition(tmpDict):
+                    logger.debug(f"failed condition {k}: going to remove index {key} from meshgrid")
+                    keys_to_pop.append(f"{key}")
 
-       # pop keys that do not fulfill condition
-       if len(keys_to_pop) > 0:
-           for key in keys_to_pop:
-               meshgrid.pop(key)
+        # pop keys that do not fulfill condition
+        if len(keys_to_pop) > 0:
+            for key in keys_to_pop:
+                meshgrid.pop(key)
 
     return meshgrid
 

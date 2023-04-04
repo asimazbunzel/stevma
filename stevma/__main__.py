@@ -15,6 +15,7 @@ def __signal_handler(signal, frame) -> None:
     """Callback for CTRL-C"""
     end()
 
+
 def end() -> None:
     """Stop manager"""
 
@@ -27,6 +28,7 @@ def end() -> None:
     logger.info("manager stopped")
 
     sys.exit(0)
+
 
 def start() -> None:
     """Start manager"""
@@ -54,6 +56,7 @@ def start() -> None:
     grid.create_MESAmodels()
 
     print("done")
+
 
 def run() -> None:
     """Run manager"""

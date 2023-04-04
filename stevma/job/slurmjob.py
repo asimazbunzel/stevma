@@ -1,79 +1,78 @@
 """Module with Slurm job object"""
 
-from pathlib import Path
-import subprocess
 from typing import Union
+
 import os
+import subprocess
+from pathlib import Path
 
 
-class SlurmJob(object):
+class SlurmJob:
     """Slurm job to handle grid of stellar evolution simulations"""
 
     def __init__(
-       self,
-       name: str = "",
-       command: str = "",
-       out_fname: str = "/dev/null",
-       err_fname: str = "/dev/null",
-       queue: str = "furious",
-       msg: str = "ALL",
-       email="",
-       nodes: int = 1,
-       ppn: int = 8,
-       mem: int = 8,
-       walltime: str = "168:00:00",
+        self,
+        name: str = "",
+        command: str = "",
+        out_fname: str = "/dev/null",
+        err_fname: str = "/dev/null",
+        queue: str = "furious",
+        msg: str = "ALL",
+        email="",
+        nodes: int = 1,
+        ppn: int = 8,
+        mem: int = 8,
+        walltime: str = "168:00:00",
     ) -> None:
 
-       self.name = name
+        self.name = name
 
-       # this holds the actual script to compute the grid
-       self.command = command
+        # this holds the actual script to compute the grid
+        self.command = command
 
-       # output filename
-       self.out_fname = out_fname
-       if self.out_fname == "" or self.out_fname is None:
-           self.out_fname = "/dev/null"
+        # output filename
+        self.out_fname = out_fname
+        if self.out_fname == "" or self.out_fname is None:
+            self.out_fname = "/dev/null"
 
-       # error filename
-       self.err_fname = err_fname
-       if self.err_fname == "" or self.err_fname is None:
-           self.err_fname = self.out_fname
+        # error filename
+        self.err_fname = err_fname
+        if self.err_fname == "" or self.err_fname is None:
+            self.err_fname = self.out_fname
 
-       # queue string
-       self.queue = queue
-       if self.queue is None:
-           raise ValueError("Slurm job requires type of queue")
+        # queue string
+        self.queue = queue
+        if self.queue is None:
+            raise ValueError("Slurm job requires type of queue")
 
-       self.msg = msg
-       if self.msg == "" or self.msg is None:
-           self.msg = "bea"
+        self.msg = msg
+        if self.msg == "" or self.msg is None:
+            self.msg = "bea"
 
-       # user mail
-       self.email = email
-       if self.email == "" or self.email is None:
-           raise ValueError("Slurm job requires email")
+        # user mail
+        self.email = email
+        if self.email == "" or self.email is None:
+            raise ValueError("Slurm job requires email")
 
-       # number of nodes to use
-       self.nodes = int(nodes)
-       if self.nodes < 1 or self.nodes is None:
-           raise ValueError("Slurm job requires nodes to be an integer >= 1")
+        # number of nodes to use
+        self.nodes = int(nodes)
+        if self.nodes < 1 or self.nodes is None:
+            raise ValueError("Slurm job requires nodes to be an integer >= 1")
 
-       # processors per node
-       self.ppn = int(ppn)
-       if self.ppn < 1 or self.ppn is None:
-           raise ValueError("Slurm job requires ppn to be an integer >= 1")
+        # processors per node
+        self.ppn = int(ppn)
+        if self.ppn < 1 or self.ppn is None:
+            raise ValueError("Slurm job requires ppn to be an integer >= 1")
 
-       # memory requested
-       self.mem = int(mem)
-       if self.mem < 1 or self.mem is None:
-          raise ValueError(
-            "Slurm job requires mem to be an integer > 1 (in Gb)"
-          )
+        # memory requested
+        self.mem = int(mem)
+        if self.mem < 1 or self.mem is None:
+            raise ValueError("Slurm job requires mem to be an integer > 1 (in Gb)")
 
-       # walltime for job (max is 168:00:00)
-       self.walltime = walltime
-       if self.walltime == "" or self.walltime is None:
-           self.walltime = "168:00:00"
+        # walltime for job (max is 168:00:00)
+        self.walltime = walltime
+        if self.walltime == "" or self.walltime is None:
+            self.walltime = "168:00:00"
 
     def set_shell_config(self) -> str:
         """Configuraton stuff for the shell"""
@@ -87,16 +86,14 @@ class SlurmJob(object):
     def set_slurm_config(self) -> str:
         """Configuration options of the Slurm job"""
         string = "#SBATCH -S /bin/bash\n"
-        string += "#SBATCH --job-name={}\n".format(self.name)
-        string += "#SBATCH --out={}\n".format(self.out_fname)
-        string += "#SBATCH --partition {}\n".format(self.queue)
-        string += "#SBATCH --mail-type={}\n".format(self.msg)
-        string += "#SBATCH --mail-user={}\n".format(self.email)
-        string += "#SBATCH --time={}\n".format(self.walltime)
-        string += "#SBATCH --nodes={} --cpus-per-task={}\n".format(
-            self.nodes, self.ppn
-        )
-        string += "#SBATCH --mem={}gb\n".format(self.mem)
+        string += f"#SBATCH --job-name={self.name}\n"
+        string += f"#SBATCH --out={self.out_fname}\n"
+        string += f"#SBATCH --partition {self.queue}\n"
+        string += f"#SBATCH --mail-type={self.msg}\n"
+        string += f"#SBATCH --mail-user={self.email}\n"
+        string += f"#SBATCH --time={self.walltime}\n"
+        string += f"#SBATCH --nodes={self.nodes} --cpus-per-task={self.ppn}\n"
+        string += f"#SBATCH --mem={self.mem}gb\n"
         string += '\nexport SCRATCH="/scratch/$USER.$PBS_JOBID"\n'
         return string
 
@@ -114,10 +111,10 @@ class SlurmJob(object):
         msg += self.set_slurm_config()
         msg += "\n"
         msg += self.command
-        
+
         with open(fname, "w") as f:
             f.write(msg)
-    
+
     def submit(self, fname: str = "", root_dir: str = ""):
         """Submit Slurm job to queue
 
