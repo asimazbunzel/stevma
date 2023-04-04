@@ -16,4 +16,5 @@ def get_version() -> str:
         return "unknown"
 
 
+__module_name__: str = __name__
 version: str = get_version()
