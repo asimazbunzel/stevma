@@ -43,7 +43,7 @@ class ShellJob:
         with open(fname, "w") as f:
             f.write(msg)
 
-    def submit(self, fname: str = "", root_dir: str = ""):
+    def submit(self, fname: str = "", root_dir: str = "") -> None:
         """Submit Slurm job to queue
 
         Parameters
@@ -62,6 +62,6 @@ class ShellJob:
             )
             stdout, stderr = p.communicate()
             if stderr is not None:
-                print(f"WARNING: could not run shell job: {stderr}")
+                print(f"WARNING: could not run shell job: {str(stderr)}")
         except Exception as e:
             print(e)

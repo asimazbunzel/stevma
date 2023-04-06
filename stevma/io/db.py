@@ -2,6 +2,8 @@
 Database module
 """
 
+from typing import Any, Dict
+
 import os
 import sqlite3
 import time
@@ -57,7 +59,7 @@ class Database:
             raise e
 
     def create_table(
-        self, table_name: str = "", table_data_dict: OrderedDict = OrderedDict()
+        self, table_name: str = "", table_data_dict: Dict[Any, Any] = OrderedDict()
     ) -> None:
         logger.debug(f" Database: creating table `{table_name}`")
 
@@ -87,7 +89,7 @@ class Database:
     def insert_record(
         self,
         table_name: str = "",
-        table_data_dict: OrderedDict = OrderedDict(),
+        table_data_dict: Dict[Any, Any] = OrderedDict(),
     ) -> None:
 
         logger.debug(f" Database: inserting record into table `{table_name}`")
@@ -105,16 +107,16 @@ class Database:
                 sql_column_values += f"{value}, "
 
         # write row to MESArun database
-        sql: str = f"{sql} {sql_column_names[:-2]}) VALUES {sql_column_values[:-2]})"
+        sql2: str = f"{sql} {sql_column_names[:-2]}) VALUES {sql_column_values[:-2]})"
 
         # commit insertion command to SQLITE database
-        self.execute(sql)
+        self.execute(sql2)
         self.commit()
 
     def update_record(
         self,
         table_name: str = "",
-        table_data_dict: OrderedDict = OrderedDict(),
+        table_data_dict: Dict[Any, Any] = OrderedDict(),
         model_id: int = -1,
     ) -> None:
 
@@ -190,7 +192,7 @@ class Database:
         logger.debug(f" Database: model with id `{model_id}` (has_data): {has_data}")
         return has_data
 
-    def fetch(self, table_name: str = "", column_name: str = "*", constraint: str = ""):
+    def fetch(self, table_name: str = "", column_name: str = "*", constraint: str = "") -> Any:
 
         sql: str = f"SELECT {column_name} FROM {table_name}"
         if len(constraint) > 0:

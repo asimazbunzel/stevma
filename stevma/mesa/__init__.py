@@ -1,13 +1,19 @@
 """Main module driver to manage MESA simulations
 """
 
+from typing import Any, Dict
+
 import pprint
+import subprocess
+import sys
 
 from stevma.io import Database, logger, progress_bar
 from stevma.job import MESAJob, ShellJob, SlurmJob
 
 from .mesa import MESAmodel
 from .utils import get_mesa_defaults, mesa_namelists, split_grid
+
+__all__ = ["get_mesa_defaults", "mesa_namelists"]
 
 
 class MESAGrid:
@@ -19,12 +25,12 @@ class MESAGrid:
         Dictionary with input values of the grid of MESA models
     """
 
-    def __init__(self, meshgrid: dict = dict(), config: dict = dict()) -> None:
+    def __init__(self, meshgrid: Dict[Any, Any] = dict(), config: Dict[Any, Any] = dict()) -> None:
         self.meshgrid = meshgrid
         self.config = config
 
         # load MESA models into a dictionary
-        self.MESAmodels = dict()
+        self.MESAmodels: Dict[Any, Any] = dict()
 
         # load database as an object
         self.database = Database(
@@ -37,7 +43,7 @@ class MESAGrid:
 
         logger.info("creating MESAmodel objects for each element in the meshgrid")
 
-        if self.meshgrid is None:
+        if len(self.meshgrid) == 0:
             logger.critical("meshgrid object is not defined. need to call `set_meshgrid` before")
             sys.exit(1)
 
@@ -55,21 +61,21 @@ class MESAGrid:
                 {
                     "MESAmodel": MESAmodel(
                         identifier=int(key),
-                        template_directory=templateDict.get("output_directory"),
-                        run_root_directory=runsDict.get("output_directory"),
-                        is_binary_evolution=templateDict.get("is_binary_evolution"),
-                        model_id=runsDict.get("id"),
-                        mesa_dir=mesaDict.get("mesa_dir"),
-                        mesasdk_dir=mesaDict.get("mesasdk_root"),
-                        mesa_caches_dir=mesaDict.get("mesa_caches_dir"),
-                        mesabin2dco_dir=mesaDict.get("mesabin2dco_dir"),
+                        template_directory=templateDict.get("output_directory"),  # type: ignore
+                        run_root_directory=runsDict.get("output_directory"),  # type: ignore
+                        is_binary_evolution=templateDict.get("is_binary_evolution"),  # type: ignore
+                        model_id=runsDict.get("id"),  # type: ignore
+                        mesa_dir=mesaDict.get("mesa_dir"),  # type: ignore
+                        mesasdk_dir=mesaDict.get("mesasdk_root"),  # type: ignore
+                        mesa_caches_dir=mesaDict.get("mesa_caches_dir"),  # type: ignore
+                        mesabin2dco_dir=mesaDict.get("mesabin2dco_dir"),  # type: ignore
                         **self.meshgrid[key],
                     )
                 }
             )
 
             # load options for MESA simulations
-            self.MESAmodels[key]["MESAmodel"].load_options(templateDict.get("options_filename"))
+            self.MESAmodels[key]["MESAmodel"].load_options(templateDict.get("options_filename"))  # type: ignore
 
             # get dictionaries for template & run namelists
             self.MESAmodels[key]["MESAmodel"].set_template_namelists()
@@ -94,7 +100,7 @@ class MESAGrid:
         extra_makefile = []
 
         # check for extra files and folders
-        extras = templateDict.get("extras")
+        extras = templateDict.get("extras")  # type: ignore
 
         if not extras["extra_dir_in_src"] is None:
             if len(extras["extra_dir_in_src"]) > 0:
@@ -113,16 +119,16 @@ class MESAGrid:
                 extra_makefile = extras["extra_makefile"]
 
         # if the id of the runs is `mesabin2dco`, add inlists from src code
-        if runsDict.get("id") == "mesabin2dco":
-            extra_template_files.append(f"{mesaDict.get('mesabin2dco_dir')}/inlist_ce")
-            extra_template_files.append(f"{mesaDict.get('mesabin2dco_dir')}/inlist_cc")
+        if runsDict.get("id") == "mesabin2dco":  # type: ignore
+            extra_template_files.append(f"{mesaDict.get('mesabin2dco_dir')}/inlist_ce")  # type: ignore
+            extra_template_files.append(f"{mesaDict.get('mesabin2dco_dir')}/inlist_cc")  # type: ignore
 
         # create template stucture of MESAruns just once
         keys = list(self.meshgrid.keys())
         key0 = keys[0]
         self.MESAmodels[key0]["MESAmodel"].create_template_structure(
             copy_default_workdir=True,
-            replace=templateDict.get("overwrite"),
+            replace=templateDict.get("overwrite"),  # type: ignore
             extra_src_folders=extra_src_folders,
             extra_src_files=extra_src_files,
             extra_makefile=extra_makefile,
@@ -133,9 +139,9 @@ class MESAGrid:
         # also, save *.list files with the information on the columns that will be saved by MESA
         list_filenames = []
         for name in [
-            mesaDict.get("history_columns_filename"),
-            mesaDict.get("profile_columns_filename"),
-            mesaDict.get("binary_history_columns_filename"),
+            mesaDict.get("history_columns_filename"),  # type: ignore
+            mesaDict.get("profile_columns_filename"),  # type: ignore
+            mesaDict.get("binary_history_columns_filename"),  # type: ignore
         ]:
             if name is not None and name != "":
                 list_filenames.append(name)
@@ -163,7 +169,7 @@ class MESAGrid:
 
         # split grid
         self.MESAmodels = split_grid(
-            number_of_grids=managerDict.get("number_of_jobs"), Grid=self.MESAmodels
+            number_of_grids=managerDict.get("number_of_jobs"), Grid=self.MESAmodels  # type: ignore
         )
 
     def dump_MESAmodels_to_database(self) -> None:
@@ -218,26 +224,26 @@ class MESAGrid:
 
         # mesaJob object contains all the stuff needed to make a MESA run
         mesaJob = MESAJob(
-            mesa_dir=mesaDict.get("mesa_dir"),
-            mesasdk_dir=mesaDict.get("mesasdk_root"),
-            mesa_caches_dir=mesaDict.get("mesa_caches_dir"),
-            is_binary_evolution=templateDict.get("is_binary_evolution"),
+            mesa_dir=mesaDict.get("mesa_dir"),  # type: ignore
+            mesasdk_dir=mesaDict.get("mesasdk_root"),  # type: ignore
+            mesa_caches_dir=mesaDict.get("mesa_caches_dir"),  # type: ignore
+            is_binary_evolution=templateDict.get("is_binary_evolution"),  # type: ignore
         )
 
         # create command which will go into a shell script
         command = mesaJob.set_mesainit_string()
         command += mesaJob.set_mesa_env_variables_string(
-            template_directory=templateDict.get("output_directory"),
-            runs_directory=runsDict.get("output_directory"),
+            template_directory=templateDict.get("output_directory"),  # type: ignore
+            runs_directory=runsDict.get("output_directory"),  # type: ignore
         )
         command += mesaJob.set_main_loop_string()
 
         # create manager job and write it to a file
         fname = ""
-        if managerDict.get("job_file_prefix") != "":
-            fname += f"{managerDict.get('job_file_prefix')}"
-        if managerDict.get("job_filename") != "":
-            fname += f"{managerDict.get('job_filename')}"
+        if managerDict.get("job_file_prefix") != "":  # type: ignore
+            fname += f"{managerDict.get('job_file_prefix')}"  # type: ignore
+        if managerDict.get("job_filename") != "":  # type: ignore
+            fname += f"{managerDict.get('job_filename')}"  # type: ignore
 
         # if fname is empty, exit with an error
         if fname == "":
@@ -248,25 +254,25 @@ class MESAGrid:
             sys.exit(1)
 
         # create the script depending on the type of manager to use for the simulations
-        if managerDict.get("manager") == "shell":
+        if managerDict.get("manager") == "shell":  # type: ignore
 
             job = ShellJob(name=fname, command=command)
             job.write_job_to_file(fname=fname)
 
-        elif managerDict.get("manager") == "slurm":
+        elif managerDict.get("manager") == "slurm":  # type: ignore
 
-            job = SlurmJob(
-                name=managerDict.get("hpc")["name"],
+            job = SlurmJob(  # type: ignore
+                name=managerDict.get("hpc")["name"],  # type: ignore
                 command=command,
-                out_fname=managerDict.get("hpc")["out_fname"],
-                err_fname=managerDict.get("hpc")["err_fname"],
-                queue=managerDict.get("hpc")["queue"],
-                msg=managerDict.get("hpc")["msg"],
-                email=managerDict.get("hpc")["email"],
-                nodes=managerDict.get("hpc")["nodes"],
-                ppn=managerDict.get("hpc")["ppn"],
-                mem=managerDict.get("hpc")["mem"],
-                walltime=managerDict.get("hpc")["walltime"],
+                out_fname=managerDict.get("hpc")["out_fname"],  # type: ignore
+                err_fname=managerDict.get("hpc")["err_fname"],  # type: ignore
+                queue=managerDict.get("hpc")["queue"],  # type: ignore
+                msg=managerDict.get("hpc")["msg"],  # type: ignore
+                email=managerDict.get("hpc")["email"],  # type: ignore
+                nodes=managerDict.get("hpc")["nodes"],  # type: ignore
+                ppn=managerDict.get("hpc")["ppn"],  # type: ignore
+                mem=managerDict.get("hpc")["mem"],  # type: ignore
+                walltime=managerDict.get("hpc")["walltime"],  # type: ignore
             )
             job.write_job_to_file(fname=fname)
 
@@ -291,9 +297,9 @@ class MESAGrid:
         managerDict = self.config.get("Manager")
         runsDict = self.config.get("Models")
 
-        number_of_jobs = managerDict.get("number_of_jobs")
+        number_of_jobs = managerDict.get("number_of_jobs")  # type: ignore
         for k in range(number_of_jobs):
-            fname = f"{runsDict.get('output_directory')}/job_{k}.folders"
+            fname = f"{runsDict.get('output_directory')}/job_{k}.folders"  # type: ignore
             logger.debug(f"going to write folders for job_id {k} in file {fname}")
 
             directory_list = []
@@ -326,7 +332,7 @@ class MESAGrid:
         runsDict = self.config.get("Models")
 
         # get number of jobs
-        number_of_jobs = managerDict.get("number_of_jobs")
+        number_of_jobs = managerDict.get("number_of_jobs")  # type: ignore
 
         # check that the job_id is lower than the number of jobs
         if job_id > number_of_jobs:
@@ -334,10 +340,10 @@ class MESAGrid:
             sys.exit(1)
 
         # name of the file with the runs of the specific job_id
-        fname = f"{runsDict.get('output_directory')}/job_{job_id}.folders"
+        fname = f"{runsDict.get('output_directory')}/job_{job_id}.folders"  # type: ignore
 
         # submit depending on the manager
-        if managerDict.get("manager") == "shell":
+        if managerDict.get("manager") == "shell":  # type: ignore
             try:
                 p = subprocess.Popen(
                     f"sh {fname}",

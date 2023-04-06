@@ -10,7 +10,7 @@ from pathlib import Path
 class SlurmJob:
     """Slurm job to handle grid of stellar evolution simulations"""
 
-    def __init__(
+    def __init__(  # type: ignore
         self,
         name: str = "",
         command: str = "",
@@ -115,7 +115,7 @@ class SlurmJob:
         with open(fname, "w") as f:
             f.write(msg)
 
-    def submit(self, fname: str = "", root_dir: str = ""):
+    def submit(self, fname: str = "", root_dir: str = "") -> None:
         """Submit Slurm job to queue
 
         Parameters
@@ -134,6 +134,6 @@ class SlurmJob:
             )
             stdout, stderr = p.communicate()
             if stderr is not None:
-                print(f"WARNING: could not run shell job: {stderr}")
+                print(f"WARNING: could not run shell job: {str(stderr)}")
         except Exception as e:
             print(e)

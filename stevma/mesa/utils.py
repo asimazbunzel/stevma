@@ -1,7 +1,7 @@
 """Module with utils functions and classes for a MESA model
 """
 
-from typing import Tuple, Union
+from typing import Any, Dict, Tuple, Union
 
 import os
 from collections import OrderedDict
@@ -85,7 +85,7 @@ class MESAMainNamelists:
         }
 
 
-def namelist_defaults(fname: Union[str, Path]) -> dict:
+def namelist_defaults(fname: Union[str, Path]) -> Dict[Any, Any]:
     """Get default options for a certain namelist used by MESA
 
     Parameters
@@ -127,7 +127,7 @@ def namelist_defaults(fname: Union[str, Path]) -> dict:
     return options
 
 
-def get_mesa_defaults(mesa_dir: Union[str, Path] = "") -> dict:
+def get_mesa_defaults(mesa_dir: Union[str, Path] = "") -> Dict[Any, Any]:
     """Obtain all default options of every namelist used by MESA
 
     Parameters
@@ -180,7 +180,7 @@ def get_mesa_defaults(mesa_dir: Union[str, Path] = "") -> dict:
     return MESADefaults
 
 
-def split_grid(number_of_grids: int = 1, Grid: dict = {}) -> Tuple[int, dict]:
+def split_grid(number_of_grids: int = 1, Grid: Dict[Any, Any] = {}) -> Dict[str, Dict[Any, Any]]:
     """Split grid into smaller subgrids
 
     Parameters

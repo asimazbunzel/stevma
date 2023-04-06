@@ -1,5 +1,7 @@
 """Main driver for stellar evolution manager"""
 
+from typing import Any, Callable, Dict, List
+
 import argparse
 import os
 import pprint
@@ -62,7 +64,7 @@ class Manager:
             self.mesa_dir = mesa_dir
 
         # load mesh of stellar evolution models
-        self.meshgrid = None
+        self.meshgrid: Dict[str, Any[str, int, float, bool]] = dict()
 
     def init_args(self) -> argparse.ArgumentParser:
         """Initialize parser of arguments from the command line"""
@@ -151,7 +153,7 @@ class Manager:
 
         return args
 
-    def load_config_file(self) -> dict:
+    def load_config_file(self) -> Any:
         """Load configuration file with options used by the manager"""
 
         logger.info("loading settings from file")
@@ -162,7 +164,7 @@ class Manager:
 
         return load_yaml(self.args.config_fname)
 
-    def _load_meshgrid(self) -> dict:
+    def _load_meshgrid(self) -> Any:
         """Load mesh of stellar evolution models from a file"""
 
         logger.info("loading file with mesh of stellar evolution models")
@@ -175,7 +177,7 @@ class Manager:
 
         return load_yaml(fname)
 
-    def set_meshgrid(self, conditions: list = []) -> None:
+    def set_meshgrid(self, conditions: List[Callable[..., bool]] = []) -> None:
         """Create grid of evolutionary models
 
         Parameters
@@ -193,10 +195,10 @@ class Manager:
 
         # get dict of parameters that will be changing in the grid, each key of the dict
         # corresponds to a certain namelist of the MESA source code
-        model_grid = self._load_meshgrid()
+        model_grid: Dict[str, Dict[str, Any]] = self._load_meshgrid()
 
         # check of valid options in meshgrid
-        if not check_for_valid_namelist_options(d=model_grid, mesa_dir=self.mesa_dir):
+        if not check_for_valid_namelist_options(d=model_grid, mesa_dir=str(self.mesa_dir)):
             sys.exit(1)
 
         self.meshgrid = create_meshgrid_from_dict(d=model_grid, conditions=conditions)

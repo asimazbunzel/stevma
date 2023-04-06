@@ -1,6 +1,6 @@
 """Input/output module"""
 
-from typing import Union
+from typing import Any, Dict, Union
 
 import re
 import sys
@@ -10,7 +10,7 @@ from pathlib import Path
 import yaml
 
 
-def load_yaml(fname: Union[str, Path]) -> dict:
+def load_yaml(fname: Union[str, Path]) -> Any:
     """Load configuration file with YAML format
 
     Parameters
@@ -89,7 +89,7 @@ class NoSingleValueFoundException(Exception):
     pass
 
 
-def parse_fortran_value_to_python(value: str = ""):
+def parse_fortran_value_to_python(value: str = "") -> Any:
     """Try to parse a single value, if no single value is matched it raises an exception
 
     Parameters
@@ -106,13 +106,13 @@ def parse_fortran_value_to_python(value: str = ""):
     except ValueError:
         try:
             tmp = value.replace("d", "E")
-            parsed_value = float(tmp)
+            parsed_value = float(tmp)  # type: ignore
         except ValueError:
             # check for complex number
             complex_values = re.findall(complex_re, value)
             if len(complex_values) == 1:
                 a, b = complex_values[0]
-                parsed_value = complex(float(a), float(b))
+                parsed_value = complex(float(a), float(b))  # type: ignore
             elif value in [".true.", "T"]:
                 # check for a boolean
                 parsed_value = True
@@ -121,9 +121,9 @@ def parse_fortran_value_to_python(value: str = ""):
             else:
                 # see if we have an escaped string
                 if value.startswith("'") and value.endswith("'") and value.count("'") == 2:
-                    parsed_value = value[1:-1]
+                    parsed_value = value[1:-1]  # type: ignore
                 elif value.startswith('"') and value.endswith('"') and value.count('"') == 2:
-                    parsed_value = value[1:-1]
+                    parsed_value = value[1:-1]  # type: ignore
                 else:
                     raise NoSingleValueFoundException(value)
 
@@ -147,7 +147,7 @@ def parse_python_value_to_fortran(value):
     elif isinstance(value, str):
         return f"'{value}'"
 
-    elif is_python2 and isinstance(value):  # needed if unicode literals are used
+    elif is_python2 and isinstance(value, str):  # needed if unicode literals are used
         return f"'{value}'"
 
     elif isinstance(value, complex):
@@ -159,10 +159,8 @@ def parse_python_value_to_fortran(value):
     else:
         raise Exception(f"Variable type not understood: {type(value)}")
 
-    return value
 
-
-def namelist_string_to_dict(buffer: str = "") -> dict:
+def namelist_string_to_dict(buffer: str = "") -> Dict[Any, Any]:
     """From a string containing a fortran namelist, group elements of it into a dictionary
 
     Parameters
@@ -198,7 +196,7 @@ def namelist_string_to_dict(buffer: str = "") -> dict:
             filtered_lines.append(line)
 
     group_blocks = re.findall(group_re, "\n".join(filtered_lines))
-    group_cnt = dict()
+    group_cnt: Dict[Any, Any] = dict()
     for group_block in group_blocks:
         block_lines_raw = group_block.split("\n")
         group_name = block_lines_raw.pop(0).strip()
@@ -272,12 +270,12 @@ def namelist_string_to_dict(buffer: str = "") -> dict:
                 for variable_index, inline_value in enumerate(variable_arr_entries):
                     parsed_value = parse_fortran_value_to_python(value=inline_value)
 
-                    if variable_index is None:
-                        group[variable_name] = parsed_value
-                    else:
-                        if variable_name not in group:
-                            group[variable_name] = {"_is_list": True}
-                        group[variable_name][variable_index] = parsed_value
+                    # if variable_index is None:
+                    #     group[variable_name] = parsed_value
+                    # else:
+                    if variable_name not in group:
+                        group[variable_name] = {"_is_list": True}
+                    group[variable_name][variable_index] = parsed_value
 
         if group_name in group.keys():
 
@@ -289,11 +287,11 @@ def namelist_string_to_dict(buffer: str = "") -> dict:
 
         namelists[group_name] = group
 
-        return namelists
+    return namelists
 
 
 def dump_dict_to_namelist_string(
-    data: dict = {}, namelist: str = "", array_inline: bool = False
+    data: Dict[Any, Any] = {}, namelist: str = "", array_inline: bool = False
 ) -> str:
     """Dump python dictionary to a string of a fortran namelist
 

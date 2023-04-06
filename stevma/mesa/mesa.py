@@ -1,6 +1,6 @@
 """Module with single MESA model
 """
-from typing import Union
+from typing import Any, Dict, List, Tuple, Union
 
 import subprocess
 import sys
@@ -104,7 +104,7 @@ class MESAmodel:
     _defaultStar1RunInlistName = "inlist1"
     _defaultStar2RunInlistName = "inlist2"
 
-    def __init__(
+    def __init__(  # type: ignore
         self,
         identifier: int = 0,
         template_directory: Union[str, Path] = "",
@@ -116,10 +116,10 @@ class MESAmodel:
         mesasdk_dir: Union[str, Path] = "",
         mesa_caches_dir: Union[str, Path] = "",
         mesabin2dco_dir: Union[str, Path] = "",
-        variables: dict = {},
-        namelists_for_init: dict = {},
-        namelists_for_template: dict = {},
-        namelists_for_run: dict = {},
+        variables: Dict[Any, Any] = {},
+        namelists_for_init: Dict[Any, Any] = {},
+        namelists_for_template: Dict[Any, Any] = {},
+        namelists_for_run: Dict[Any, Any] = {},
         **kwargs,
     ) -> None:
 
@@ -169,7 +169,7 @@ class MESAmodel:
             self._MESAbin2dcoDefaults = get_mesa_defaults(mesa_dir=self.mesabin2dco_dir)
         except Exception as e:
             logger.error(e)
-            self._MESAbin2dcoDefaults = None
+            self._MESAbin2dcoDefaults = dict()
 
         # hidden name of run
         self.__run_name_from_kwargs__ = ""
@@ -181,7 +181,7 @@ class MESAmodel:
             for key, value in kwargs.items():
                 found_variable_name = False
                 for namelist in self._MESADefaults.keys():
-                    if key in self._MESADefaults.get(namelist):
+                    if key in self._MESADefaults.get(namelist):  # type: ignore
                         found_variable_name = True
                         break
 
@@ -208,11 +208,11 @@ class MESAmodel:
 
         # again, if not the first time using this, a database can have this information
         if len(namelists_for_init) == 0:
-            self.namelists_for_init = None
+            self.namelists_for_init: Dict[Any, Any] = dict()
         if len(namelists_for_template) == 0:
-            self.namelists_for_template = None
+            self.namelists_for_template: Dict[Any, Any] = dict()
         if len(namelists_for_run) == 0:
-            self.namelists_for_run = None
+            self.namelists_for_run: Dict[Any, Any] = dict()
 
     def load_options(self, fname: Union[str, Path] = "") -> None:
         """Load options needed for a MESA model
@@ -237,8 +237,8 @@ class MESAmodel:
         self._MESAOptions = load_yaml(fname=fname)
 
     def __get_non_default_values_for_namelists__(
-        self, Options: dict = {}, namelists: list = []
-    ) -> dict:
+        self, Options: Dict[Any, Any] = {}, namelists: Tuple[Any, ...] = ()
+    ) -> Dict[Any, Any]:
         """Look for non default options in namelists when compared to MESA defaults
 
         Parameters
@@ -262,7 +262,7 @@ class MESAmodel:
         else:
             defaultDicts = self._MESADefaults
 
-        nonDefaultOptions = dict()
+        nonDefaultOptions: Dict[Any, Any] = dict()
         for namelist in namelists:
             nonDefaultOptions[namelist] = dict()
 
@@ -296,7 +296,7 @@ class MESAmodel:
                         continue
 
                     # only add those options that do not match defaults
-                    if value != defaultDicts.get(namelist)[key]:
+                    if value != defaultDicts.get(namelist)[key]:  # type: ignore
                         # this is to replace some template & run strings
                         if isinstance(value, str):
                             if "#{run}" in value:
@@ -336,7 +336,7 @@ class MESAmodel:
 
         return nonDefaultOptions
 
-    def __pop_empty_namelists__(self, d: dict = {}) -> dict:
+    def __pop_empty_namelists__(self, d: Dict[Any, Any] = {}) -> Dict[Any, Any]:
         """Remove empty namelists from dict
 
         Parameters
@@ -366,7 +366,7 @@ class MESAmodel:
         These options are then considered to be a template for the model
         """
 
-        def replace_template_string_in_dict(d: dict = {}) -> dict:
+        def replace_template_string_in_dict(d: Dict[Any, Any] = {}) -> Dict[Any, Any]:
             """Replace a string with `template` in a key"""
             for key, value in d.items():
                 try:
@@ -399,7 +399,7 @@ class MESAmodel:
                     namelists=mesa_namelists.bin2dco_namelists,
                 )
                 for namelist in mesabin2dcoOptions.keys():
-                    inlistNamelists[namelist] = mesabin2dcoOptions.get(namelist)
+                    inlistNamelists[namelist] = mesabin2dcoOptions.get(namelist)  # type: ignore
 
             else:
                 logger.critical(
@@ -423,7 +423,7 @@ class MESAmodel:
 
         # next, the structure for the `inlist_project` is created. this file is called from inside
         # the previously created `inlist`
-        projectNamelists = dict()
+        projectNamelists: Dict[Any, Any] = dict()
         if self.is_binary_evolution:
 
             if self.model_id == "mesabinary" or self.model_id == "mesabin2dco":
@@ -467,7 +467,7 @@ class MESAmodel:
     def set_run_namelists(self) -> None:
         """Create namelists with options that change for different MESA runs"""
 
-        def replace_run_string_in_dict(d: dict = {}) -> dict:
+        def replace_run_string_in_dict(d: Dict[Any, Any] = {}) -> Dict[Any, Any]:
             """Replace a string with `template` in a key
 
             Parameters
@@ -522,10 +522,10 @@ class MESAmodel:
         self,
         copy_default_workdir: bool = True,
         replace: bool = True,
-        extra_src_folders: list = [],
-        extra_src_files: list = [],
-        extra_makefile: list = [],
-        extra_template_files: list = [],
+        extra_src_folders: List[str] = [],
+        extra_src_files: List[str] = [],
+        extra_makefile: List[str] = [],
+        extra_template_files: List[str] = [],
     ) -> None:
         """Create and copy files and folders to template root
 
@@ -580,11 +580,11 @@ class MESAmodel:
 
                 elif self.model_id == "mesabin2dco":
                     mesa_folder = self.mesabin2dco_dir
-                    src_files = self._defaultSrcFilenamesBin2dco
+                    src_files = self._defaultSrcFilenamesBin2dco  # type: ignore
 
             else:
                 mesa_folder = self.mesa_dir / "star/work"
-                src_files = self._defaultSrcFilenamesStar
+                src_files = self._defaultSrcFilenamesStar  # type: ignore
 
             # copy files to src folder of template directory
             for file in src_files:
@@ -643,25 +643,25 @@ class MESAmodel:
             for file in extra_src_files:
                 output_folder = self.template_directory / "src"
                 filename_stripped = file.split("/")[-1]
-                file = Path(file)
-                if file.is_file():
+                filepath = Path(file)
+                if filepath.is_file():
                     output_file = output_folder / Path(filename_stripped)
-                    copyfile(file, output_file)
+                    copyfile(filepath, output_file)
                 else:
-                    print(f"could not copy file {file}. file not found")
-                if ".f" not in str(file):
-                    print(f"file {str(file)} is not a fortran file. copying either way")
+                    print(f"could not copy file {filepath}. file not found")
+                if ".f" not in str(filepath):
+                    print(f"file {str(filepath)} is not a fortran file. copying either way")
 
         # extra files in the make folder
         if len(extra_makefile):
             for file in extra_makefile:
                 output_folder = self.template_directory / "make"
-                file = Path(file)
-                if file.is_file():
-                    output_file = output_folder / file
-                    copyfile(file, output_file)
+                filepath = Path(file)
+                if filepath.is_file():
+                    output_file = output_folder / filepath
+                    copyfile(filepath, output_file)
                 else:
-                    print(f"could not copy file {file}. file not found")
+                    print(f"could not copy file {filepath}. file not found")
 
         # copy extra files for the template directory. e.g., the *.list files with what will be
         # saved in MESA output
@@ -672,12 +672,12 @@ class MESAmodel:
                 # split by "/" and get the name from the last item
                 filename = str(file).split("/")[-1]
 
-                file = Path(file)
-                if file.is_file():
+                filepath = Path(file)
+                if filepath.is_file():
                     output_file = output_folder / filename
-                    copyfile(file, output_file)
+                    copyfile(filepath, output_file)
                 else:
-                    print(f"could not copy file {file}. file not found")
+                    print(f"could not copy file {filepath}. file not found")
 
     def create_run_structure(self) -> None:
         """Create and copy files to run root"""
@@ -719,7 +719,7 @@ class MESAmodel:
             )
             stdout, stderr = p.communicate()
             if stderr is not None:
-                print(f"WARNING: could not compile MESA source code: {stderr}")
+                print(f"WARNING: could not compile MESA source code: {str(stderr)}")
         except Exception as e:
             print(e)
 
@@ -812,7 +812,7 @@ class MESAmodel:
                 for namelist in mesa_namelists.star_namelists:
                     if (
                         namelist in self.namelists_for_template
-                        and len(self.namelists_for_template.get(namelist)) > 0
+                        and len(self.namelists_for_template.get(namelist)) > 0  # type: ignore
                     ):
                         if namelist not in data1:
                             data1[namelist] = dict()
@@ -862,7 +862,7 @@ class MESAmodel:
 
                 inlist_star_file_string = ""
                 for key in data:
-                    if key in self._defaultStarNamelists:
+                    if key in self._defaultStarNamelists:  # type: ignore
                         inlist_star_file_string = dump_dict_to_namelist_string(
                             data=data[key], namelist=key, array_inline=False
                         )
@@ -876,10 +876,10 @@ class MESAmodel:
                 sys.exit(1)
 
         else:
-            logger.critical(f"{loc_id} is not a valid option")
+            logger.critical(f"{name_id} is not a valid option")
             sys.exit(1)
 
-    def copy_column_list_files(self, filenames: list = []) -> None:
+    def copy_column_list_files(self, filenames: List[str] = []) -> None:
         """Copy column list file with the columns that will be saved in a MESA run
 
         Parameters
