@@ -20,7 +20,7 @@ Models:
   id: "mesabinary"
 
   # meshgrid_filename: name of file with meshgrid options
-  meshgrid_filename: "example/grid.yaml"
+  meshgrid_filename: "example/example_grid.yaml"
 
   # output_directory: directory where MESA namelists and directories will be saved
   output_directory: "example/runs"
@@ -41,7 +41,7 @@ Template:
   is_binary_evolution: true
 
   # options_filename: MESA specific options shared by all stars in the grid
-  options_filename: "example/mesa_options.yaml"
+  options_filename: "example/example_mesa_options.yaml"
 
   # output_directory: directory where template files and MESA source code will be saved
   output_directory: "example/templates"
