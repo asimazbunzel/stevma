@@ -4,7 +4,7 @@ default_context:
   project_name: "stevma"
   project_description: "Stellar evolution manager"
   organization: "asimazbunzel"
-  license: "MIT"
+  license: "GNU GPL v2.1"
   minimal_python_version: 3.7
   github_name: "asimazbunzel"
   email: "asimazbunzel@iar.unlp.edu.ar"

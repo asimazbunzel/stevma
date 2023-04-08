@@ -9,7 +9,7 @@ version = "0.1.0"
 description = "Stellar evolution manager"
 readme = "README.md"
 authors = ["asimazbunzel <asimazbunzel@iar.unlp.edu.ar>"]
-license = "MIT"
+license = "GNU GPL v2.1"
 repository = "https://github.com/asimazbunzel/stevma"
 homepage = "https://github.com/asimazbunzel/stevma"
 
