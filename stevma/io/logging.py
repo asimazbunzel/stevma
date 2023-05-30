@@ -7,7 +7,7 @@ import os
 import tempfile
 from pathlib import Path
 
-from .. import __module_name__  # type: ignore
+__module_name__ = "stevma"
 
 # a really nice way to handle logging: save .log in $HOME/.local/share/bin2dcomngr (if possible)
 # else in $HOME/.cache/MODULE-NAME
