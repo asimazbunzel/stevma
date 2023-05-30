@@ -1,0 +1,17 @@
+name: dev-3.7
+
+channels:
+  - conda-forge
+
+dependencies:
+  - python =3.7
+  - build
+  - black
+  - flake8
+  - interrogate
+  - isort
+  - pre_commit
+  - pyupgrade
+  - sphinx
+  - sphinx-rtd-theme
+  - sphinx-automodapi
