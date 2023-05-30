@@ -6,7 +6,7 @@ Each of them present in the dictionary is a dictionary in itself, such that the 
 are varied in the grid are keys of them and should contain lists or numbers or booleans\
 """
 
-from typing import Any, Callable, Dict, List, Tuple
+from typing import Any, Callable, Dict, List
 
 import numpy as np
 

@@ -3,17 +3,16 @@
 
 from typing import Any, Dict
 
-import pprint
 import subprocess
 import sys
 
-from stevma.io import Database, logger, progress_bar
+from stevma.io import Database, logger
 from stevma.job import MESAJob, ShellJob, SlurmJob
 
 from .mesa import MESAmodel
 from .utils import get_mesa_defaults, mesa_namelists, split_grid
 
-__all__ = ["get_mesa_defaults", "mesa_namelists"]
+__all__ = ["get_mesa_defaults", "MESAGrid", "mesa_namelists"]
 
 
 class MESAGrid:
@@ -148,7 +147,7 @@ class MESAGrid:
         self.MESAmodels[key0]["MESAmodel"].copy_column_list_files(filenames=list_filenames)
 
         # create and store namelists into each run folder
-        for key in self.meshgrid.keys():
+        for key in keys:
             self.MESAmodels[key]["MESAmodel"].create_run_structure()
             self.MESAmodels[key]["MESAmodel"].save_namelists_to_file(name_id="run")
 
