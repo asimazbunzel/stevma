@@ -1,10 +1,6 @@
 """Module with Slurm job object"""
 
-from typing import Union
-
-import os
 import subprocess
-from pathlib import Path
 
 
 class SlurmJob:
@@ -79,7 +75,13 @@ class SlurmJob:
 
         string = "#!/bin/sh\n"
         string += "\n"
-        string += f"# shell script name: {self.name}"
+        string += "# This script was created by the STEVMA module\n"
+        string += "# to manually run the grid of stellar evolution\n"
+        string += "# models, give executable permissions to the script\n"
+        string += "# and then submit the desired models found in the\n"
+        string += "# different *.folders files using the shell script\n"
+        string += f"# with name: {self.name}\n"
+        string += f"# e.g.: `$ {self.name} job_0.folders`\n"
 
         return string
 
