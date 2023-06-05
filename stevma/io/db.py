@@ -7,6 +7,7 @@ from typing import Any, Dict
 import os
 import sqlite3
 from collections import OrderedDict
+from pathlib import Path
 
 import numpy as np
 
@@ -39,6 +40,13 @@ class Database:
                 self.remove_database()
             except Exception:
                 pass
+
+        # make parent directory if needed
+        parent_directory = Path(database_name).parent
+        try:
+            parent_directory.mkdir(parents=True)
+        except FileExistsError:
+            pass
 
         # only after trying to remove, create connection
         self.connection = sqlite3.connect(database_name)
@@ -212,7 +220,10 @@ class Database:
         self.cursor.execute(sql)
 
     def __del__(self):
-        self.connection.close()
+        try:
+            self.connection.close()
+        except Exception:
+            pass
 
     def __enter__(self):
         return self
